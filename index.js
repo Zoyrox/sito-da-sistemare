@@ -1,5 +1,6 @@
 /**
- * MotoStaffa Office - Order Management System
+ * MotoStaffa Office - Order Management System v3.0
+ * Con AI avanzata, gestione etichette multiple, ricerca profonda e UI mobile migliorata
  */
 
 const express = require('express');
@@ -25,18 +26,17 @@ app.set('trust proxy', 1);
 // Database
 const db = new Database();
 
-
-
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://maps.googleapis.com"],
       scriptSrcAttr: ["'unsafe-inline'"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+      connectSrc: ["'self'", "https://maps.googleapis.com"],
     },
   },
 }));
@@ -120,12 +120,14 @@ app.get('/', requireAuth, asyncHandler(async (req, res) => {
   const stats = await db.getDashboardStats();
   const recentOrders = await db.getRecentOrders(10);
   const alerts = await db.getShippingAlerts();
+  const labelQueue = await db.getLabelQueue();
   
   res.render('dashboard', { 
     user: req.session.user,
     stats,
     recentOrders,
-    alerts
+    alerts,
+    labelQueueCount: labelQueue.length
   });
 }));
 
@@ -145,22 +147,92 @@ app.post('/api/ai-parse', requireAuth, asyncHandler(async (req, res) => {
   res.json(data);
 }));
 
+// API: Google Maps Geocoding
+app.get('/api/geocode', requireAuth, asyncHandler(async (req, res) => {
+  const { address, city, zip } = req.query;
+  
+  if (!address && !city) {
+    return res.status(400).json({ error: 'Indirizzo o città richiesti' });
+  }
+  
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API Key non configurata' });
+  }
+  
+  const fullAddress = `${address || ''} ${city || ''} ${zip || ''}`.trim();
+  const encodedAddress = encodeURIComponent(fullAddress);
+  
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}&region=it&language=it`
+    );
+    
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results.length > 0) {
+      const result = data.results[0];
+      const components = result.address_components;
+      
+      // Estrai i componenti dell'indirizzo
+      const extracted = {
+        formatted_address: result.formatted_address,
+        place_id: result.place_id,
+        location: result.geometry.location,
+        street_number: null,
+        route: null,
+        locality: null,
+        postal_code: null,
+        administrative_area_level_2: null, // Provincia
+        country: null
+      };
+      
+      for (const component of components) {
+        const types = component.types;
+        if (types.includes('street_number')) {
+          extracted.street_number = component.long_name;
+        } else if (types.includes('route')) {
+          extracted.route = component.long_name;
+        } else if (types.includes('locality')) {
+          extracted.locality = component.long_name;
+        } else if (types.includes('postal_code')) {
+          extracted.postal_code = component.long_name;
+        } else if (types.includes('administrative_area_level_2')) {
+          extracted.administrative_area_level_2 = component.short_name;
+        } else if (types.includes('country')) {
+          extracted.country = component.long_name;
+        }
+      }
+      
+      res.json({ success: true, result: extracted });
+    } else {
+      res.json({ success: false, status: data.status, message: 'Indirizzo non trovato' });
+    }
+  } catch (err) {
+    console.error('Geocoding error:', err);
+    res.status(500).json({ error: 'Errore durante la geocodifica' });
+  }
+}));
+
 // API: Orders
 app.get('/api/orders/search', requireAuth, asyncHandler(async (req, res) => {
   const { q } = req.query;
-  if (!q || q.length < 2) return res.json({ orders: [] });
-  const orders = await db.searchOrders(q);
+  if (!q || q.length < 1) return res.json({ orders: [] });
+  const orders = await db.searchOrdersDeep(q);
   res.json({ orders });
 }));
 
 app.get('/api/orders', requireAuth, asyncHandler(async (req, res) => {
-  const { status, source, urgent, product_model, is_subito_pickup } = req.query;
+  const { status, source, urgent, product_model, is_subito_pickup, country, sortBy } = req.query;
   const orders = await db.getOrders({ 
     status, 
     source, 
     urgent: urgent === 'true',
     product_model,
-    is_subito_pickup: is_subito_pickup === 'true' ? true : is_subito_pickup === 'false' ? false : undefined
+    is_subito_pickup: is_subito_pickup === 'true' ? true : is_subito_pickup === 'false' ? false : undefined,
+    country,
+    sortBy
   });
   res.json({ orders });
 }));
@@ -170,12 +242,6 @@ app.get('/api/orders/filter/model', requireAuth, asyncHandler(async (req, res) =
   const { type } = req.query; // 'carbonio', 'alluminio', 'all'
   const orders = await db.getOrdersByProductModel(type);
   res.json({ orders });
-}));
-
-// API: Get repeat customers
-app.get('/api/customers/repeat', requireAuth, asyncHandler(async (req, res) => {
-  const customers = await db.getRepeatCustomers();
-  res.json({ customers });
 }));
 
 app.get('/api/orders/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -194,6 +260,7 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     customer_city: req.body.customer_city || null,
     customer_zip: req.body.customer_zip || null,
     customer_province: req.body.customer_province || null,
+    customer_country: req.body.customer_country || 'Italia',
     product_model: req.body.product_model,
     quantity: parseInt(req.body.quantity) || 1,
     price_total: parseFloat(req.body.price_total) || 0,
@@ -204,11 +271,12 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     is_urgent: req.body.is_urgent === 'true' || req.body.is_urgent === true,
     is_subito_pickup: req.body.is_subito_pickup === 'true' || req.body.is_subito_pickup === true,
     subito_address_optional: req.body.subito_address_optional === 'true' || req.body.subito_address_optional === true,
-    sale_date: req.body.sale_date || null
+    sale_date: req.body.sale_date || null,
+    order_display_number: req.body.order_display_number || null
   };
 
   const result = await db.createOrder(orderData);
-  res.json({ success: true, orderId: result.lastID, orderNumber: result.orderNumber });
+  res.json({ success: true, orderId: result.lastID, orderNumber: result.orderNumber, displayNumber: result.displayNumber });
 }));
 
 app.put('/api/orders/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -220,8 +288,8 @@ app.put('/api/orders/:id', requireAuth, asyncHandler(async (req, res) => {
   const updateData = {};
   
   ['source', 'customer_name', 'customer_phone', 'customer_email', 
-   'customer_address', 'customer_city', 'customer_zip', 'customer_province',
-   'product_model', 'tracking_code', 'notes', 'facebook_chat_url', 'subito_ad_url', 'sale_date']
+   'customer_address', 'customer_city', 'customer_zip', 'customer_province', 'customer_country',
+   'product_model', 'tracking_code', 'notes', 'facebook_chat_url', 'subito_ad_url', 'sale_date', 'order_display_number']
     .forEach(field => {
       if (req.body[field] !== undefined) updateData[field] = req.body[field];
     });
@@ -268,6 +336,56 @@ app.patch('/api/orders/:id/status', requireAuth, asyncHandler(async (req, res) =
   res.json({ success: true });
 }));
 
+// API: Update order display number
+app.patch('/api/orders/:id/display-number', requireAuth, asyncHandler(async (req, res) => {
+  const { display_number } = req.body;
+  
+  if (!display_number || !display_number.match(/^#?\d+$/)) {
+    return res.status(400).json({ error: 'Numero ordine non valido. Usa formato #123' });
+  }
+  
+  const formattedNumber = display_number.startsWith('#') ? display_number : `#${display_number}`;
+  
+  try {
+    await db.updateOrderDisplayNumber(req.params.id, formattedNumber);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}));
+
+// API: Reorder all display numbers
+app.post('/api/orders/reorder-numbers', requireAuth, asyncHandler(async (req, res) => {
+  const result = await db.reorderDisplayNumbers();
+  res.json({ success: true, reordered: result.reordered });
+}));
+
+// API: Label Queue
+app.get('/api/label-queue', requireAuth, asyncHandler(async (req, res) => {
+  const orders = await db.getLabelQueue();
+  res.json({ orders });
+}));
+
+app.post('/api/label-queue/:orderId', requireAuth, asyncHandler(async (req, res) => {
+  await db.addToLabelQueue(req.params.orderId);
+  res.json({ success: true });
+}));
+
+app.delete('/api/label-queue/:orderId', requireAuth, asyncHandler(async (req, res) => {
+  await db.removeFromLabelQueue(req.params.orderId);
+  res.json({ success: true });
+}));
+
+app.delete('/api/label-queue', requireAuth, asyncHandler(async (req, res) => {
+  await db.clearLabelQueue();
+  res.json({ success: true });
+}));
+
+app.get('/api/label-queue/:orderId/check', requireAuth, asyncHandler(async (req, res) => {
+  const isInQueue = await db.isInLabelQueue(req.params.orderId);
+  res.json({ inQueue: isInQueue });
+}));
+
 // API: Templates
 app.get('/api/product-templates', requireAuth, asyncHandler(async (req, res) => {
   const templates = await db.getProductTemplates();
@@ -291,10 +409,10 @@ app.get('/api/export', requireAuth, asyncHandler(async (req, res) => {
   res.json({ orders, exportedAt: new Date().toISOString() });
 }));
 
-// Pages: Repeat Customers
-app.get('/customers/repeat', requireAuth, asyncHandler(async (req, res) => {
-  const customers = await db.getRepeatCustomers();
-  res.render('repeat-customers', { user: req.session.user, customers });
+// API: Stats
+app.get('/api/stats', requireAuth, asyncHandler(async (req, res) => {
+  const stats = await db.getDashboardStats();
+  res.json({ stats });
 }));
 
 // Pages: Orders
@@ -322,10 +440,37 @@ app.get('/orders/:id', requireAuth, asyncHandler(async (req, res) => {
   res.render('order-detail', { user: req.session.user, order, trackingUrl });
 }));
 
+// Etichetta singola
 app.get('/orders/:id/label', requireAuth, asyncHandler(async (req, res) => {
   const order = await db.getOrderById(req.params.id);
   if (!order) return res.redirect('/');
-  res.render('print-label', { order });
+  res.render('print-label', { orders: [order], singleMode: true });
+}));
+
+// Etichette multiple
+app.get('/labels/print', requireAuth, asyncHandler(async (req, res) => {
+  const orders = await db.getLabelQueue();
+  if (orders.length === 0) {
+    return res.redirect('/');
+  }
+  res.render('print-label', { orders, singleMode: false });
+}));
+
+// Pagina gestione etichette
+app.get('/labels/queue', requireAuth, asyncHandler(async (req, res) => {
+  const orders = await db.getLabelQueue();
+  res.render('label-queue', { user: req.session.user, orders });
+}));
+
+// Pagina ricerca avanzata
+app.get('/search', requireAuth, asyncHandler(async (req, res) => {
+  res.render('search', { user: req.session.user, query: req.query.q || '', orders: [] });
+}));
+
+// Pagina statistiche
+app.get('/stats', requireAuth, asyncHandler(async (req, res) => {
+  const stats = await db.getDashboardStats();
+  res.render('stats', { user: req.session.user, stats });
 }));
 
 // Error handler
@@ -341,7 +486,7 @@ app.use((req, res) => {
 
 // Start
 app.listen(PORT, () => {
-  console.log('🚀 MotoStaffa Office avviato');
+  console.log('🚀 MotoStaffa Office v3.0 avviato');
   console.log(`📊 Database: ${db.dbPath}`);
   console.log(`🌐 URL: http://localhost:${PORT}`);
 });

@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Dashboard - MotoStaffa Office</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,9 +35,20 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
           Nuovo Ordine
         </a>
-        <a href="/customers/repeat" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Clienti Recidivi
+        <a href="/search" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Ricerca
+        </a>
+        <a href="/labels/queue" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Etichette
+          <% if (labelQueueCount > 0) { %>
+            <span class="nav-badge"><%= labelQueueCount %></span>
+          <% } %>
+        </a>
+        <a href="/stats" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          Statistiche
         </a>
       </nav>
 
@@ -81,6 +92,24 @@
 
       <!-- Content -->
       <div class="content">
+        <!-- Search Bar -->
+        <div class="card search-card" style="margin-bottom: 20px;">
+          <div class="card-body">
+            <div class="search-box-large">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="globalSearch" placeholder="Cerca per ID, Nome, Città, Provincia, Paese..." autocomplete="off">
+            </div>
+            <div class="search-tags">
+              <span class="search-tag">ID: #123</span>
+              <span class="search-tag">Nome: Mario</span>
+              <span class="search-tag">Città: Roma</span>
+              <span class="search-tag">Provincia: RM</span>
+              <span class="search-tag">Paese: Italia</span>
+            </div>
+            <div id="searchResults" class="search-results-dropdown" style="display: none;"></div>
+          </div>
+        </div>
+
         <!-- Stats -->
         <div class="stats-grid">
           <div class="stat-card">
@@ -162,13 +191,13 @@
 
           <div class="stat-card">
             <div class="stat-header">
-              <span class="stat-label">Clienti Recidivi</span>
-              <div class="stat-icon" style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span class="stat-label">Internazionali</span>
+              <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.repeatCustomers?.count || 0 %></div>
-            <div class="stat-subtitle">hanno riacquistato</div>
+            <div class="stat-value"><%= stats.international?.count || 0 %></div>
+            <div class="stat-subtitle">spedizioni estere</div>
           </div>
         </div>
 
@@ -182,6 +211,17 @@
           </div>
         <% } %>
 
+        <!-- Label Queue Alert -->
+        <% if (labelQueueCount > 0) { %>
+          <div class="alert alert-info" style="margin-bottom: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            <div>
+              <strong>Hai <%= labelQueueCount %> ordini</strong> in coda per la stampa etichette. 
+              <a href="/labels/print" target="_blank" style="color: inherit; text-decoration: underline;">Stampa ora</a>
+            </div>
+          </div>
+        <% } %>
+
         <!-- Filters -->
         <div class="card" style="margin-bottom: 20px;">
           <div class="card-header">
@@ -191,7 +231,7 @@
             </h3>
           </div>
           <div class="card-body">
-            <div class="form-row">
+            <div class="form-row filters-row">
               <div class="form-group">
                 <label class="form-label">Tipo Staffa</label>
                 <select id="filterModel" class="form-select" onchange="applyFilters()">
@@ -220,7 +260,15 @@
                   <option value="direct">Diretto</option>
                 </select>
               </div>
-              <div class="form-group" style="display: flex; align-items: flex-end;">
+              <div class="form-group">
+                <label class="form-label">Ordina per</label>
+                <select id="filterSort" class="form-select" onchange="applyFilters()">
+                  <option value="created">Data creazione</option>
+                  <option value="sale_date">Data vendita</option>
+                  <option value="display_number">Numero ordine</option>
+                </select>
+              </div>
+              <div class="form-group filter-actions">
                 <button class="btn btn-secondary" onclick="resetFilters()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/></svg>
                   Reset
@@ -240,33 +288,38 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Cliente</th>
-                  <th>Prodotto</th>
-                  <th>Prezzo</th>
-                  <th>Stato</th>
-                  <th>Azioni</th>
+                  <th class="col-id">N°</th>
+                  <th class="col-cliente">Cliente</th>
+                  <th class="col-prodotto">Prodotto</th>
+                  <th class="col-prezzo">Prezzo</th>
+                  <th class="col-stato">Stato</th>
+                  <th class="col-azioni">Azioni</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="ordersTableBody">
                 <% recentOrders.forEach(order => { %>
-                  <tr onclick="window.location.href='/orders/<%= order.id %>'" style="cursor: pointer;">
-                    <td>
-                      <span style="font-family: monospace; color: var(--text-muted);">#<%= order.id %></span>
+                  <tr data-order-id="<%= order.id %>">
+                    <td class="col-id">
+                      <span class="order-number"><%= order.order_display_number || '#' + order.id %></span>
                       <% if (order.is_urgent) { %>
-                        <span style="color: var(--danger); margin-left: 6px;">!</span>
+                        <span class="urgent-badge">!</span>
                       <% } %>
                     </td>
-                    <td>
-                      <div style="font-weight: 500;"><%= order.customer_name %></div>
-                      <div style="font-size: 12px; color: var(--text-muted);"><%= order.customer_city %></div>
+                    <td class="col-cliente">
+                      <div class="cliente-nome"><%= order.customer_name %></div>
+                      <div class="cliente-luogo">
+                        <%= order.customer_city %>
+                        <% if (order.customer_country && order.customer_country !== 'Italia') { %>
+                          <span class="country-badge"><%= order.customer_country %></span>
+                        <% } %>
+                      </div>
                     </td>
-                    <td>
-                      <div style="font-weight: 500;"><%= order.product_model %></div>
-                      <div style="font-size: 12px; color: var(--text-muted);">Qty: <%= order.quantity %></div>
+                    <td class="col-prodotto">
+                      <div class="prodotto-nome"><%= order.product_model %></div>
+                      <div class="prodotto-qty">Qty: <%= order.quantity %></div>
                     </td>
-                    <td style="font-weight: 600; color: var(--success);">€<%= Number(order.price_total).toFixed(2) %></td>
-                    <td>
+                    <td class="col-prezzo">€<%= Number(order.price_total).toFixed(2) %></td>
+                    <td class="col-stato">
                       <% const badges = { 
                         pending: 'badge-pending', 
                         processing: 'badge-processing', 
@@ -283,8 +336,11 @@
                       }; %>
                       <span class="badge <%= badges[order.status] %>"><%= labels[order.status] %></span>
                     </td>
-                    <td>
-                      <div style="display: flex; gap: 8px;">
+                    <td class="col-azioni">
+                      <div class="action-buttons">
+                        <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation(); toggleLabelQueue('<%= order.id %>', this)" title="Aggiungi/Rimuovi da etichette">
+                          <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                        </button>
                         <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation(); updateStatus('<%= order.id %>', 'processing')" title="In lavorazione">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </button>
@@ -324,6 +380,17 @@
       document.getElementById('sidebar').classList.toggle('open');
     });
 
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('menuToggle');
+      if (window.innerWidth <= 1024 && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+          sidebar.classList.remove('open');
+        }
+      }
+    });
+
     // Update status
     async function updateStatus(id, status) {
       try {
@@ -341,6 +408,81 @@
       }
     }
 
+    // Toggle label queue
+    async function toggleLabelQueue(orderId, btn) {
+      try {
+        const res = await fetch(`/api/label-queue/${orderId}/check`);
+        const { inQueue } = await res.json();
+        
+        if (inQueue) {
+          await fetch(`/api/label-queue/${orderId}`, { method: 'DELETE' });
+          btn.classList.remove('active');
+          showToast('Rimosso dalla coda etichette', 'success');
+        } else {
+          await fetch(`/api/label-queue/${orderId}`, { method: 'POST' });
+          btn.classList.add('active');
+          showToast('Aggiunto alla coda etichette', 'success');
+        }
+      } catch (err) {
+        showToast('Errore', 'error');
+      }
+    }
+
+    // Global search
+    const searchInput = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const query = e.target.value.trim();
+      
+      if (query.length < 2) {
+        searchResults.style.display = 'none';
+        return;
+      }
+      
+      searchTimeout = setTimeout(() => performSearch(query), 300);
+    });
+
+    async function performSearch(query) {
+      try {
+        const res = await fetch(`/api/orders/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSearchResults(data.orders);
+      } catch (err) {
+        console.error('Search error:', err);
+      }
+    }
+
+    function renderSearchResults(orders) {
+      if (orders.length === 0) {
+        searchResults.innerHTML = '<div class="search-no-results">Nessun risultato trovato</div>';
+      } else {
+        searchResults.innerHTML = orders.map(order => `
+          <a href="/orders/${order.id}" class="search-result-item">
+            <div class="search-result-main">
+              <span class="search-result-number">${order.order_display_number || '#' + order.id}</span>
+              <span class="search-result-name">${order.customer_name}</span>
+            </div>
+            <div class="search-result-meta">
+              ${order.customer_city || ''} 
+              ${order.customer_province ? '(' + order.customer_province + ')' : ''}
+              ${order.customer_country && order.customer_country !== 'Italia' ? '• ' + order.customer_country : ''}
+            </div>
+          </a>
+        `).join('');
+      }
+      searchResults.style.display = 'block';
+    }
+
+    // Hide search results when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-card')) {
+        searchResults.style.display = 'none';
+      }
+    });
+
     // Filters
     let allOrders = <%- JSON.stringify(recentOrders) %>;
     
@@ -348,8 +490,9 @@
       const modelFilter = document.getElementById('filterModel').value;
       const statusFilter = document.getElementById('filterStatus').value;
       const sourceFilter = document.getElementById('filterSource').value;
+      const sortBy = document.getElementById('filterSort').value;
       
-      let filtered = allOrders;
+      let filtered = [...allOrders];
       
       if (modelFilter !== 'all') {
         filtered = filtered.filter(o => o.product_model.toLowerCase().includes(modelFilter));
@@ -363,6 +506,17 @@
         filtered = filtered.filter(o => o.source === sourceFilter);
       }
       
+      // Sorting
+      if (sortBy === 'sale_date') {
+        filtered.sort((a, b) => new Date(b.sale_date || b.created_at) - new Date(a.sale_date || a.created_at));
+      } else if (sortBy === 'display_number') {
+        filtered.sort((a, b) => {
+          const numA = parseInt((a.order_display_number || '#' + a.id).replace('#', ''));
+          const numB = parseInt((b.order_display_number || '#' + b.id).replace('#', ''));
+          return numA - numB;
+        });
+      }
+      
       renderOrders(filtered);
     }
     
@@ -370,11 +524,12 @@
       document.getElementById('filterModel').value = 'all';
       document.getElementById('filterStatus').value = 'all';
       document.getElementById('filterSource').value = 'all';
+      document.getElementById('filterSort').value = 'created';
       renderOrders(allOrders);
     }
     
     function renderOrders(orders) {
-      const tbody = document.querySelector('.table tbody');
+      const tbody = document.getElementById('ordersTableBody');
       document.getElementById('orderCount').textContent = orders.length;
       
       if (orders.length === 0) {
@@ -409,25 +564,31 @@
       };
       
       tbody.innerHTML = orders.map(order => `
-        <tr onclick="window.location.href='/orders/${order.id}'" style="cursor: pointer;">
-          <td>
-            <span style="font-family: monospace; color: var(--text-muted);">#${order.id}</span>
-            ${order.is_urgent ? '<span style="color: var(--danger); margin-left: 6px;">!</span>' : ''}
+        <tr data-order-id="${order.id}" onclick="window.location.href='/orders/${order.id}'">
+          <td class="col-id">
+            <span class="order-number">${order.order_display_number || '#' + order.id}</span>
+            ${order.is_urgent ? '<span class="urgent-badge">!</span>' : ''}
           </td>
-          <td>
-            <div style="font-weight: 500;">${order.customer_name}</div>
-            <div style="font-size: 12px; color: var(--text-muted);">${order.customer_city || 'N/D'}</div>
+          <td class="col-cliente">
+            <div class="cliente-nome">${order.customer_name}</div>
+            <div class="cliente-luogo">
+              ${order.customer_city || 'N/D'}
+              ${order.customer_country && order.customer_country !== 'Italia' ? '<span class="country-badge">' + order.customer_country + '</span>' : ''}
+            </div>
           </td>
-          <td>
-            <div style="font-weight: 500;">${order.product_model}</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Qty: ${order.quantity}</div>
+          <td class="col-prodotto">
+            <div class="prodotto-nome">${order.product_model}</div>
+            <div class="prodotto-qty">Qty: ${order.quantity}</div>
           </td>
-          <td style="font-weight: 600; color: var(--success);">€${Number(order.price_total).toFixed(2)}</td>
-          <td>
+          <td class="col-prezzo">€${Number(order.price_total).toFixed(2)}</td>
+          <td class="col-stato">
             <span class="badge ${badges[order.status]}">${labels[order.status]}</span>
           </td>
-          <td>
-            <div style="display: flex; gap: 8px;">
+          <td class="col-azioni">
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation(); toggleLabelQueue('${order.id}', this)" title="Aggiungi/Rimuovi da etichette">
+                <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+              </button>
               <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation(); updateStatus('${order.id}', 'processing')" title="In lavorazione">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               </button>
@@ -452,6 +613,25 @@
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
+
+    // Check label queue status for visible orders
+    async function checkLabelQueueStatus() {
+      const rows = document.querySelectorAll('#ordersTableBody tr[data-order-id]');
+      for (const row of rows) {
+        const orderId = row.dataset.orderId;
+        const btn = row.querySelector('.label-icon').parentElement;
+        try {
+          const res = await fetch(`/api/label-queue/${orderId}/check`);
+          const { inQueue } = await res.json();
+          if (inQueue) btn.classList.add('active');
+        } catch (err) {}
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLabelQueueStatus();
+    });
   </script>
 </body>
 </html>

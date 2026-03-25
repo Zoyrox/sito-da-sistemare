@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ordine #<%= order.order_number || order.id %> - MotoStaffa Office</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ordine <%= order.order_display_number || '#' + order.id %> - MotoStaffa Office</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,6 +35,18 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
           Nuovo Ordine
         </a>
+        <a href="/search" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Ricerca
+        </a>
+        <a href="/labels/queue" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Etichette
+        </a>
+        <a href="/stats" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          Statistiche
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -64,18 +76,22 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
           </button>
           <div class="page-title">
-            <h2>Ordine <%= order.order_number || '#' + order.id %></h2>
+            <h2>Ordine <%= order.order_display_number || '#' + order.id %></h2>
             <p>Creato il <%= new Date(order.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %><% if (order.sale_date) { %> • Vendita: <%= new Date(order.sale_date).toLocaleDateString('it-IT') %><% } %></p>
           </div>
         </div>
-        <div style="display: flex; gap: 10px;">
-          <a href="/orders/<%= order.id %>/edit" class="btn btn-secondary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-            Modifica
-          </a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="toggleLabelQueue()" id="labelQueueBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            <span id="labelQueueText">Aggiungi a Etichette</span>
+          </button>
           <a href="/orders/<%= order.id %>/label" target="_blank" class="btn btn-secondary">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
             Etichetta
+          </a>
+          <a href="/orders/<%= order.id %>/edit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            Modifica
           </a>
         </div>
       </header>
@@ -84,7 +100,7 @@
         <!-- Status Bar -->
         <div class="card" style="margin-bottom: 24px;">
           <div class="card-body" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-            <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
               <span style="color: var(--text-muted);">Stato:</span>
               <% const badges = { pending: 'badge-pending', processing: 'badge-processing', shipped: 'badge-shipped', delivered: 'badge-delivered', cancelled: 'badge-cancelled' }; %>
               <% const labels = { pending: 'In Attesa', processing: 'In Lavorazione', shipped: 'Spedito', delivered: 'Consegnato', cancelled: 'Annullato' }; %>
@@ -101,8 +117,14 @@
                   Ritiro Subito
                 </span>
               <% } %>
+              <% if (order.customer_country && order.customer_country !== 'Italia') { %>
+                <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  <%= order.customer_country %>
+                </span>
+              <% } %>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <% if (order.status === 'pending') { %>
                 <button class="btn btn-primary" onclick="updateStatus('processing')">Inizia Lavorazione</button>
               <% } %>
@@ -117,7 +139,7 @@
         </div>
 
         <!-- Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
           <!-- Cliente -->
           <div class="card">
             <div class="card-header">
@@ -153,16 +175,31 @@
               </h3>
             </div>
             <div class="card-body">
-              <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;"><%= order.customer_name %></div>
-              <div style="color: var(--text-secondary); margin-bottom: 4px;"><%= order.customer_address %></div>
-              <div style="color: var(--text-secondary);">
-                <%= order.customer_zip %> <%= order.customer_city %>
-                <% if (order.customer_province) { %>(<%= order.customer_province %>)<% } %>
-              </div>
-              <a href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(order.customer_address + ' ' + order.customer_city) %>" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; color: var(--primary); text-decoration: none; font-size: 13px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Apri in Maps
-              </a>
+              <% if (order.is_subito_pickup) { %>
+                <div class="empty-state" style="padding: 20px;">
+                  <div class="empty-state-icon" style="width: 48px; height: 48px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+                  </div>
+                  <h3 style="font-size: 14px;">Ritiro in sede</h3>
+                  <p style="font-size: 12px; color: var(--text-muted);">Nessun indirizzo di spedizione</p>
+                </div>
+              <% } else { %>
+                <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;"><%= order.customer_name %></div>
+                <div style="color: var(--text-secondary); margin-bottom: 4px;"><%= order.customer_address %></div>
+                <div style="color: var(--text-secondary);">
+                  <%= order.customer_zip %> <%= order.customer_city %>
+                  <% if (order.customer_province) { %>(<%= order.customer_province %>)<% } %>
+                </div>
+                <% if (order.customer_country && order.customer_country !== 'Italia') { %>
+                  <div style="margin-top: 8px;">
+                    <span class="country-badge"><%= order.customer_country %></span>
+                  </div>
+                <% } %>
+                <a href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(order.customer_address + ' ' + order.customer_city + ' ' + (order.customer_country || 'Italia')) %>" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; color: var(--primary); text-decoration: none; font-size: 13px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Apri in Maps
+                </a>
+              <% } %>
             </div>
           </div>
 
@@ -182,11 +219,11 @@
               <div style="display: flex; gap: 24px;">
                 <div>
                   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Quantita</div>
-                  <div style="font-size: 20px; font-weight: 700;"><%= order.quantity %></div>
+                  <div style="font-size: 24px; font-weight: 700;"><%= order.quantity %></div>
                 </div>
                 <div>
                   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Prezzo</div>
-                  <div style="font-size: 20px; font-weight: 700; color: var(--success);">€<%= Number(order.price_total).toFixed(2) %></div>
+                  <div style="font-size: 24px; font-weight: 700; color: var(--success);">€<%= Number(order.price_total).toFixed(2) %></div>
                 </div>
               </div>
             </div>
@@ -204,7 +241,7 @@
               <% if (order.tracking_code) { %>
                 <div style="margin-bottom: 16px;">
                   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Codice Tracking</div>
-                  <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <code style="background: var(--bg-input); padding: 8px 12px; border-radius: 8px; font-size: 16px; font-family: monospace;"><%= order.tracking_code %></code>
                     <button class="btn btn-sm btn-secondary btn-icon" onclick="copyToClipboard('<%= order.tracking_code %>')" title="Copia">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
@@ -294,6 +331,46 @@
       document.getElementById('sidebar').classList.toggle('open');
     });
 
+    // Check label queue status
+    async function checkLabelQueueStatus() {
+      try {
+        const res = await fetch('/api/label-queue/<%= order.id %>/check');
+        const { inQueue } = await res.json();
+        updateLabelQueueButton(inQueue);
+      } catch (err) {}
+    }
+
+    function updateLabelQueueButton(inQueue) {
+      const btn = document.getElementById('labelQueueBtn');
+      const text = document.getElementById('labelQueueText');
+      if (inQueue) {
+        btn.classList.add('active');
+        text.textContent = 'Rimuovi da Etichette';
+      } else {
+        btn.classList.remove('active');
+        text.textContent = 'Aggiungi a Etichette';
+      }
+    }
+
+    async function toggleLabelQueue() {
+      try {
+        const res = await fetch('/api/label-queue/<%= order.id %>/check');
+        const { inQueue } = await res.json();
+        
+        if (inQueue) {
+          await fetch('/api/label-queue/<%= order.id %>', { method: 'DELETE' });
+          updateLabelQueueButton(false);
+          showToast('Rimosso dalla coda etichette', 'success');
+        } else {
+          await fetch('/api/label-queue/<%= order.id %>', { method: 'POST' });
+          updateLabelQueueButton(true);
+          showToast('Aggiunto alla coda etichette', 'success');
+        }
+      } catch (err) {
+        showToast('Errore', 'error');
+      }
+    }
+
     // Update status
     async function updateStatus(status) {
       try {
@@ -314,6 +391,7 @@
     // Tracking modal
     function openTrackingModal() {
       document.getElementById('trackingModal').classList.add('active');
+      document.getElementById('trackingInput').focus();
     }
 
     function closeTrackingModal() {
@@ -353,6 +431,11 @@
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLabelQueueStatus();
+    });
   </script>
 </body>
 </html>

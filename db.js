@@ -1,5 +1,6 @@
 /**
  * Database module - SQLite persistente
+ * Versione 3.0 - Con campo paese, gestione ordini avanzata e ricerca profonda
  */
 
 const fs = require('fs');
@@ -40,6 +41,7 @@ class AppDatabase {
     this.isBetter = !!Database;
     this.dbPath = dbPath;
     this.initTables();
+    this.migrateTables();
     this.seedData();
   }
 
@@ -48,6 +50,7 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_number TEXT UNIQUE,
+        order_display_number TEXT,
         source TEXT NOT NULL,
         customer_name TEXT NOT NULL,
         customer_phone TEXT NOT NULL,
@@ -56,6 +59,7 @@ class AppDatabase {
         customer_city TEXT,
         customer_zip TEXT,
         customer_province TEXT,
+        customer_country TEXT DEFAULT 'Italia',
         product_model TEXT NOT NULL,
         quantity INTEGER DEFAULT 1,
         price_total REAL DEFAULT 0,
@@ -93,16 +97,69 @@ class AppDatabase {
       )
     `;
 
+    // Tabella per le etichette multiple da stampare
+    const createLabelQueue = `
+      CREATE TABLE IF NOT EXISTS label_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      )
+    `;
+
+    // Tabella per le impostazioni
+    const createSettings = `
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     if (this.isBetter) {
       this.db.exec(createOrders);
       this.db.exec(createTemplates);
       this.db.exec(createComuni);
+      this.db.exec(createLabelQueue);
+      this.db.exec(createSettings);
       this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)');
       this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at)');
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_sale_date ON orders(sale_date)');
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_country ON orders(customer_country)');
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_city ON orders(customer_city)');
+      this.db.exec('CREATE INDEX IF NOT EXISTS idx_orders_province ON orders(customer_province)');
     } else {
       this.db.run(createOrders);
       this.db.run(createTemplates);
       this.db.run(createComuni);
+      this.db.run(createLabelQueue);
+      this.db.run(createSettings);
+    }
+  }
+
+  // Migrazione per aggiungere campi nuovi a tabelle esistenti
+  migrateTables() {
+    try {
+      if (this.isBetter) {
+        // Verifica se il campo customer_country esiste
+        const tableInfo = this.db.prepare("PRAGMA table_info(orders)").all();
+        const hasCountry = tableInfo.some(col => col.name === 'customer_country');
+        const hasDisplayNumber = tableInfo.some(col => col.name === 'order_display_number');
+        
+        if (!hasCountry) {
+          console.log('🔄 Migrazione: aggiungo campo customer_country');
+          this.db.exec("ALTER TABLE orders ADD COLUMN customer_country TEXT DEFAULT 'Italia'");
+        }
+        
+        if (!hasDisplayNumber) {
+          console.log('🔄 Migrazione: aggiungo campo order_display_number');
+          this.db.exec("ALTER TABLE orders ADD COLUMN order_display_number TEXT");
+          // Inizializza con i valori esistenti
+          this.db.exec("UPDATE orders SET order_display_number = '#' || id WHERE order_display_number IS NULL");
+        }
+      }
+    } catch (err) {
+      console.error('Errore migrazione:', err.message);
     }
   }
   
@@ -167,20 +224,34 @@ class AppDatabase {
     return `MS${year}${month}${day}-${random}`;
   }
 
+  // Get next display number
+  getNextDisplayNumber() {
+    if (this.isBetter) {
+      const result = this.db.prepare("SELECT MAX(CAST(REPLACE(order_display_number, '#', '') AS INTEGER)) as max_num FROM orders").get();
+      const nextNum = (result.max_num || 0) + 1;
+      return `#${nextNum}`;
+    }
+    return '#1';
+  }
+
   // CRUD Operations
   createOrder(data) {
     const orderNumber = data.order_number || this.generateOrderNumber();
+    const displayNumber = data.order_display_number || this.getNextDisplayNumber();
+    
     const sql = `
-      INSERT INTO orders (order_number, source, customer_name, customer_phone, customer_email,
-        customer_address, customer_city, customer_zip, customer_province,
+      INSERT INTO orders (order_number, order_display_number, source, customer_name, customer_phone, customer_email,
+        customer_address, customer_city, customer_zip, customer_province, customer_country,
         product_model, quantity, price_total, status, notes,
         facebook_chat_url, subito_ad_url, is_urgent, is_subito_pickup, subito_address_optional, sale_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
       orderNumber,
+      displayNumber,
       data.source, data.customer_name, data.customer_phone, data.customer_email || null,
-      data.customer_address || null, data.customer_city || null, data.customer_zip || null, data.customer_province || null,
+      data.customer_address || null, data.customer_city || null, data.customer_zip || null, 
+      data.customer_province || null, data.customer_country || 'Italia',
       data.product_model, data.quantity || 1, data.price_total || 0, data.status || 'pending',
       data.notes || null, data.facebook_chat_url || null, data.subito_ad_url || null,
       data.is_urgent ? 1 : 0,
@@ -191,12 +262,12 @@ class AppDatabase {
 
     if (this.isBetter) {
       const result = this.db.prepare(sql).run(params);
-      return { lastID: result.lastInsertRowid, orderNumber };
+      return { lastID: result.lastInsertRowid, orderNumber, displayNumber };
     } else {
       return new Promise((resolve, reject) => {
         this.db.run(sql, params, function(err) {
           if (err) reject(err);
-          else resolve({ lastID: this.lastID, orderNumber });
+          else resolve({ lastID: this.lastID, orderNumber, displayNumber });
         });
       });
     }
@@ -238,8 +309,19 @@ class AppDatabase {
       sql += ' AND is_subito_pickup = ?';
       params.push(filters.is_subito_pickup ? 1 : 0);
     }
+    if (filters.country) {
+      sql += ' AND customer_country = ?';
+      params.push(filters.country);
+    }
 
-    sql += ' ORDER BY is_urgent DESC, created_at DESC';
+    // Ordinamento
+    if (filters.sortBy === 'sale_date') {
+      sql += ' ORDER BY is_urgent DESC, sale_date DESC, created_at DESC';
+    } else if (filters.sortBy === 'display_number') {
+      sql += ' ORDER BY is_urgent DESC, CAST(REPLACE(order_display_number, "#", "") AS INTEGER) ASC';
+    } else {
+      sql += ' ORDER BY is_urgent DESC, created_at DESC';
+    }
 
     if (this.isBetter) {
       return this.db.prepare(sql).all(...params);
@@ -263,7 +345,6 @@ class AppDatabase {
       sql += ' WHERE product_model LIKE ?';
       params.push('%ALLUMINIO%');
     }
-    // Se modelType è 'all' o non specificato, restituisce tutti gli ordini
     
     sql += ' ORDER BY is_urgent DESC, created_at DESC';
     
@@ -278,29 +359,41 @@ class AppDatabase {
     });
   }
 
-  getRepeatCustomers() {
-    const sql = `
-      SELECT customer_name, customer_phone, customer_email, 
-             customer_address, customer_city, customer_zip, customer_province,
-             COUNT(*) as order_count, 
-             GROUP_CONCAT(DISTINCT product_model) as products,
-             MAX(created_at) as last_order
-      FROM orders 
-      WHERE status != 'cancelled'
-      GROUP BY customer_phone 
-      HAVING order_count > 1
-      ORDER BY order_count DESC, last_order DESC
-    `;
+  // Ricerca profonda
+  searchOrdersDeep(query) {
+    if (!query || query.length < 1) return this.isBetter ? [] : Promise.resolve([]);
     
+    const search = `%${query}%`;
+    const sql = `
+      SELECT * FROM orders 
+      WHERE customer_name LIKE ? 
+      OR customer_phone LIKE ? 
+      OR tracking_code LIKE ?
+      OR customer_city LIKE ? 
+      OR customer_province LIKE ?
+      OR customer_country LIKE ?
+      OR CAST(id AS TEXT) LIKE ?
+      OR order_display_number LIKE ?
+      OR order_number LIKE ?
+      ORDER BY is_urgent DESC, created_at DESC 
+      LIMIT 100
+    `;
+    const params = [search, search, search, search, search, search, search, search, search];
+
     if (this.isBetter) {
-      return this.db.prepare(sql).all();
+      return this.db.prepare(sql).all(...params);
     }
     return new Promise((resolve, reject) => {
-      this.db.all(sql, (err, rows) => {
+      this.db.all(sql, params, (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
       });
     });
+  }
+
+  // Ricerca semplice (mantenuta per compatibilità)
+  searchOrders(query) {
+    return this.searchOrdersDeep(query);
   }
 
   getRecentOrders(limit = 10) {
@@ -314,6 +407,49 @@ class AppDatabase {
         else resolve(rows);
       });
     });
+  }
+
+  // Aggiorna numero ordine visualizzato
+  updateOrderDisplayNumber(id, newDisplayNumber) {
+    // Verifica che il numero non sia già in uso da un altro ordine
+    const checkSql = 'SELECT id FROM orders WHERE order_display_number = ? AND id != ?';
+    
+    if (this.isBetter) {
+      const existing = this.db.prepare(checkSql).get(newDisplayNumber, id);
+      if (existing) {
+        throw new Error('Numero ordine già in uso');
+      }
+      return this.db.prepare('UPDATE orders SET order_display_number = ? WHERE id = ?').run(newDisplayNumber, id);
+    }
+    
+    return new Promise((resolve, reject) => {
+      this.db.get(checkSql, [newDisplayNumber, id], (err, row) => {
+        if (err) return reject(err);
+        if (row) return reject(new Error('Numero ordine già in uso'));
+        
+        this.db.run('UPDATE orders SET order_display_number = ? WHERE id = ?', [newDisplayNumber, id], function(err) {
+          if (err) reject(err);
+          else resolve({ changes: this.changes });
+        });
+      });
+    });
+  }
+
+  // Riordina i numeri ordine
+  reorderDisplayNumbers() {
+    if (this.isBetter) {
+      const orders = this.db.prepare('SELECT id FROM orders ORDER BY sale_date ASC, created_at ASC').all();
+      const updateStmt = this.db.prepare('UPDATE orders SET order_display_number = ? WHERE id = ?');
+      
+      this.db.transaction(() => {
+        orders.forEach((order, index) => {
+          updateStmt.run(`#${index + 1}`, order.id);
+        });
+      })();
+      
+      return { reordered: orders.length };
+    }
+    return Promise.resolve({ reordered: 0 });
   }
 
   updateOrder(id, data) {
@@ -356,23 +492,72 @@ class AppDatabase {
     });
   }
 
-  searchOrders(query) {
-    const search = `%${query}%`;
-    const sql = `
-      SELECT * FROM orders 
-      WHERE customer_name LIKE ? OR customer_phone LIKE ? OR tracking_code LIKE ?
-      OR customer_city LIKE ? OR CAST(id AS TEXT) LIKE ?
-      ORDER BY is_urgent DESC, created_at DESC LIMIT 50
-    `;
-    const params = [search, search, search, search, search];
-
+  // Gestione coda etichette
+  addToLabelQueue(orderId) {
+    const sql = 'INSERT OR IGNORE INTO label_queue (order_id) VALUES (?)';
     if (this.isBetter) {
-      return this.db.prepare(sql).all(...params);
+      return this.db.prepare(sql).run(orderId);
     }
     return new Promise((resolve, reject) => {
-      this.db.all(sql, params, (err, rows) => {
+      this.db.run(sql, [orderId], function(err) {
+        if (err) reject(err);
+        else resolve({ changes: this.changes });
+      });
+    });
+  }
+
+  removeFromLabelQueue(orderId) {
+    const sql = 'DELETE FROM label_queue WHERE order_id = ?';
+    if (this.isBetter) {
+      return this.db.prepare(sql).run(orderId);
+    }
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [orderId], function(err) {
+        if (err) reject(err);
+        else resolve({ changes: this.changes });
+      });
+    });
+  }
+
+  clearLabelQueue() {
+    const sql = 'DELETE FROM label_queue';
+    if (this.isBetter) {
+      return this.db.prepare(sql).run();
+    }
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, function(err) {
+        if (err) reject(err);
+        else resolve({ changes: this.changes });
+      });
+    });
+  }
+
+  getLabelQueue() {
+    const sql = `
+      SELECT o.* FROM orders o
+      INNER JOIN label_queue lq ON o.id = lq.order_id
+      ORDER BY lq.added_at ASC
+    `;
+    if (this.isBetter) {
+      return this.db.prepare(sql).all();
+    }
+    return new Promise((resolve, reject) => {
+      this.db.all(sql, (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
+      });
+    });
+  }
+
+  isInLabelQueue(orderId) {
+    const sql = 'SELECT 1 FROM label_queue WHERE order_id = ?';
+    if (this.isBetter) {
+      return !!this.db.prepare(sql).get(orderId);
+    }
+    return new Promise((resolve, reject) => {
+      this.db.get(sql, [orderId], (err, row) => {
+        if (err) reject(err);
+        else resolve(!!row);
       });
     });
   }
@@ -393,7 +578,8 @@ class AppDatabase {
         alluminio: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE product_model LIKE '%ALLUMINIO%' AND status != 'cancelled'").get(),
         subitoPickup: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE is_subito_pickup = 1 AND status != 'cancelled'").get(),
         totalOrders: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'cancelled'").get(),
-        repeatCustomers: this.db.prepare("SELECT COUNT(*) as count FROM (SELECT customer_phone FROM orders WHERE status != 'cancelled' GROUP BY customer_phone HAVING COUNT(*) > 1)").get()
+        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country != 'Italia' AND status != 'cancelled'").get(),
+        labelQueue: this.db.prepare("SELECT COUNT(*) as count FROM label_queue").get()
       };
     }
 
@@ -402,13 +588,7 @@ class AppDatabase {
       this.db.get(`SELECT COUNT(*) as count, COALESCE(SUM(price_total), 0) as revenue FROM orders WHERE DATE(created_at) = ? AND status != 'cancelled'`, [today], (err, row) => {
         if (err) reject(err);
         stats.today = row;
-        this.db.get("SELECT COUNT(*) as count FROM orders WHERE status IN ('pending', 'processing')", (err, row) => {
-          stats.toShip = row;
-          this.db.get("SELECT COUNT(*) as count FROM orders WHERE status = 'shipped'", (err, row) => {
-            stats.inTransit = row;
-            resolve(stats);
-          });
-        });
+        resolve(stats);
       });
     });
   }
@@ -466,6 +646,34 @@ class AppDatabase {
       this.db.all(sql, [cap], (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
+      });
+    });
+  }
+
+  // Impostazioni
+  getSetting(key) {
+    const sql = 'SELECT value FROM settings WHERE key = ?';
+    if (this.isBetter) {
+      const row = this.db.prepare(sql).get(key);
+      return row ? row.value : null;
+    }
+    return new Promise((resolve, reject) => {
+      this.db.get(sql, [key], (err, row) => {
+        if (err) reject(err);
+        else resolve(row ? row.value : null);
+      });
+    });
+  }
+
+  setSetting(key, value) {
+    const sql = 'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)';
+    if (this.isBetter) {
+      return this.db.prepare(sql).run(key, value);
+    }
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [key, value], function(err) {
+        if (err) reject(err);
+        else resolve({ changes: this.changes });
       });
     });
   }
