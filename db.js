@@ -145,17 +145,51 @@ class AppDatabase {
         const tableInfo = this.db.prepare("PRAGMA table_info(orders)").all();
         const hasCountry = tableInfo.some(col => col.name === 'customer_country');
         const hasDisplayNumber = tableInfo.some(col => col.name === 'order_display_number');
+        const hasSubitoAddressOptional = tableInfo.some(col => col.name === 'subito_address_optional');
+        const hasSaleDate = tableInfo.some(col => col.name === 'sale_date');
         
         if (!hasCountry) {
           console.log('🔄 Migrazione: aggiungo campo customer_country');
-          this.db.exec("ALTER TABLE orders ADD COLUMN customer_country TEXT DEFAULT 'Italia'");
+          try {
+            this.db.exec("ALTER TABLE orders ADD COLUMN customer_country TEXT DEFAULT 'Italia'");
+            console.log('✅ Campo customer_country aggiunto');
+          } catch (e) {
+            console.log('⚠️ Campo customer_country potrebbe già esistere:', e.message);
+          }
         }
         
         if (!hasDisplayNumber) {
           console.log('🔄 Migrazione: aggiungo campo order_display_number');
-          this.db.exec("ALTER TABLE orders ADD COLUMN order_display_number TEXT");
-          // Inizializza con i valori esistenti
-          this.db.exec("UPDATE orders SET order_display_number = '#' || id WHERE order_display_number IS NULL");
+          try {
+            this.db.exec("ALTER TABLE orders ADD COLUMN order_display_number TEXT");
+            // Inizializza con i valori esistenti
+            this.db.exec("UPDATE orders SET order_display_number = '#' || id WHERE order_display_number IS NULL");
+            console.log('✅ Campo order_display_number aggiunto');
+          } catch (e) {
+            console.log('⚠️ Campo order_display_number potrebbe già esistere:', e.message);
+          }
+        }
+
+        if (!hasSubitoAddressOptional) {
+          console.log('🔄 Migrazione: aggiungo campo subito_address_optional');
+          try {
+            this.db.exec("ALTER TABLE orders ADD COLUMN subito_address_optional INTEGER DEFAULT 0");
+            console.log('✅ Campo subito_address_optional aggiunto');
+          } catch (e) {
+            console.log('⚠️ Campo subito_address_optional potrebbe già esistere:', e.message);
+          }
+        }
+
+        if (!hasSaleDate) {
+          console.log('🔄 Migrazione: aggiungo campo sale_date');
+          try {
+            this.db.exec("ALTER TABLE orders ADD COLUMN sale_date DATE");
+            // Inizializza con la data di creazione
+            this.db.exec("UPDATE orders SET sale_date = DATE(created_at) WHERE sale_date IS NULL");
+            console.log('✅ Campo sale_date aggiunto');
+          } catch (e) {
+            console.log('⚠️ Campo sale_date potrebbe già esistere:', e.message);
+          }
         }
       }
     } catch (err) {
@@ -359,11 +393,21 @@ class AppDatabase {
     });
   }
 
-  // Ricerca profonda
+  // Ricerca profonda - migliorata per gestire numeri ordine
   searchOrdersDeep(query) {
     if (!query || query.length < 1) return this.isBetter ? [] : Promise.resolve([]);
     
+    // Normalizza la query: se l'utente cerca "#2", cerchiamo anche "2" e viceversa
+    let altQuery = query;
+    if (query.startsWith('#')) {
+      altQuery = query.substring(1); // Rimuovi il # per cercare anche senza
+    } else if (/^\d+$/.test(query)) {
+      altQuery = '#' + query; // Aggiungi # se è solo numeri
+    }
+    
     const search = `%${query}%`;
+    const altSearch = altQuery !== query ? `%${altQuery}%` : search;
+    
     const sql = `
       SELECT * FROM orders 
       WHERE customer_name LIKE ? 
@@ -374,11 +418,12 @@ class AppDatabase {
       OR customer_country LIKE ?
       OR CAST(id AS TEXT) LIKE ?
       OR order_display_number LIKE ?
+      OR order_display_number LIKE ?
       OR order_number LIKE ?
       ORDER BY is_urgent DESC, created_at DESC 
       LIMIT 100
     `;
-    const params = [search, search, search, search, search, search, search, search, search];
+    const params = [search, search, search, search, search, search, search, search, altSearch, search];
 
     if (this.isBetter) {
       return this.db.prepare(sql).all(...params);
@@ -578,7 +623,7 @@ class AppDatabase {
         alluminio: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE product_model LIKE '%ALLUMINIO%' AND status != 'cancelled'").get(),
         subitoPickup: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE is_subito_pickup = 1 AND status != 'cancelled'").get(),
         totalOrders: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'cancelled'").get(),
-        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country != 'Italia' AND status != 'cancelled'").get(),
+        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country NOT LIKE 'Italia%' AND status != 'cancelled'").get(),
         labelQueue: this.db.prepare("SELECT COUNT(*) as count FROM label_queue").get()
       };
     }

@@ -138,21 +138,49 @@ app.post('/api/ai-parse', requireAuth, asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Testo troppo corto' });
   }
 
-  const data = await parseCustomerData(text);
-  
-  if (!data) {
-    return res.status(500).json({ error: 'Errore parsing AI' });
-  }
+  try {
+    const data = await parseCustomerData(text);
+    
+    if (!data) {
+      return res.status(500).json({ error: 'Errore parsing AI' });
+    }
 
-  res.json(data);
+    res.json(data);
+  } catch (err) {
+    console.error('AI Parse Error:', err);
+    // Anche in caso di errore, restituisci un oggetto valido con confidence low
+    res.json({
+      customer_name: null,
+      customer_phone: null,
+      customer_email: null,
+      customer_address: null,
+      customer_city: null,
+      customer_zip: null,
+      customer_province: null,
+      country: null,
+      product_model: null,
+      quantity: 1,
+      price_total: null,
+      source: 'direct',
+      sale_date: null,
+      tracking_code: null,
+      is_urgent: false,
+      notes: null,
+      confidence: 'low',
+      error: 'Errore durante l\'analisi'
+    });
+  }
 }));
 
-// API: Google Maps Geocoding
+// API: Google Maps Geocoding - Migliorata con fallback
 app.get('/api/geocode', requireAuth, asyncHandler(async (req, res) => {
-  const { address, city, zip } = req.query;
+  const { address, city, zip, province, country } = req.query;
   
-  if (!address && !city) {
-    return res.status(400).json({ error: 'Indirizzo o città richiesti' });
+  // Estrai il nome del paese senza il codice ISO
+  const countryName = country ? country.replace(/\s*\([^)]*\)\s*$/, '').trim() : '';
+  
+  if (!address && !city && !zip) {
+    return res.status(400).json({ error: 'Almeno un campo indirizzo richiesto' });
   }
   
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -160,59 +188,112 @@ app.get('/api/geocode', requireAuth, asyncHandler(async (req, res) => {
     return res.status(500).json({ error: 'API Key non configurata' });
   }
   
-  const fullAddress = `${address || ''} ${city || ''} ${zip || ''}`.trim();
-  const encodedAddress = encodeURIComponent(fullAddress);
+  const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
   
-  try {
-    const fetch = (await import('node-fetch')).default;
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}&region=it&language=it`
-    );
-    
-    const data = await response.json();
-    
-    if (data.status === 'OK' && data.results.length > 0) {
-      const result = data.results[0];
-      const components = result.address_components;
-      
-      // Estrai i componenti dell'indirizzo
-      const extracted = {
-        formatted_address: result.formatted_address,
-        place_id: result.place_id,
-        location: result.geometry.location,
-        street_number: null,
-        route: null,
-        locality: null,
-        postal_code: null,
-        administrative_area_level_2: null, // Provincia
-        country: null
-      };
-      
-      for (const component of components) {
-        const types = component.types;
-        if (types.includes('street_number')) {
-          extracted.street_number = component.long_name;
-        } else if (types.includes('route')) {
-          extracted.route = component.long_name;
-        } else if (types.includes('locality')) {
-          extracted.locality = component.long_name;
-        } else if (types.includes('postal_code')) {
-          extracted.postal_code = component.long_name;
-        } else if (types.includes('administrative_area_level_2')) {
-          extracted.administrative_area_level_2 = component.short_name;
-        } else if (types.includes('country')) {
-          extracted.country = component.long_name;
-        }
-      }
-      
-      res.json({ success: true, result: extracted });
-    } else {
-      res.json({ success: false, status: data.status, message: 'Indirizzo non trovato' });
-    }
-  } catch (err) {
-    console.error('Geocoding error:', err);
-    res.status(500).json({ error: 'Errore durante la geocodifica' });
+  // Prova diverse strategie di ricerca
+  const searchStrategies = [];
+  
+  // Strategia 1: Indirizzo completo con tutti i campi
+  if (address && city) {
+    let fullQuery = `${address}, ${city}`;
+    if (zip) fullQuery += ` ${zip}`;
+    if (province) fullQuery += ` (${province})`;
+    if (countryName) fullQuery += `, ${countryName}`;
+    searchStrategies.push(fullQuery);
   }
+  
+  // Strategia 2: Indirizzo, città e paese
+  if (address && city && countryName) {
+    searchStrategies.push(`${address}, ${city}, ${countryName}`);
+  }
+  
+  // Strategia 3: Solo città, CAP e paese
+  if (city && zip && countryName) {
+    searchStrategies.push(`${zip} ${city}, ${countryName}`);
+  }
+  
+  // Strategia 4: Indirizzo e città
+  if (address && city) {
+    searchStrategies.push(`${address}, ${city}`);
+  }
+  
+  // Strategia 5: Solo città e paese
+  if (city && countryName) {
+    searchStrategies.push(`${city}, ${countryName}`);
+  }
+  
+  // Strategia 6: Solo città
+  if (city) {
+    searchStrategies.push(city);
+  }
+  
+  // Strategia 7: Solo CAP e paese
+  if (zip && countryName) {
+    searchStrategies.push(`${zip}, ${countryName}`);
+  }
+  
+  // Strategia 8: Solo l'indirizzo
+  if (address) {
+    searchStrategies.push(address);
+  }
+  
+  let lastError = null;
+  
+  for (const searchQuery of searchStrategies) {
+    try {
+      const encodedAddress = encodeURIComponent(searchQuery);
+      const regionParam = country === 'Italia' ? 'it' : '';
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}${regionParam ? '&region=' + regionParam : ''}&language=it`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const result = data.results[0];
+        const components = result.address_components;
+        
+        // Estrai i componenti dell'indirizzo
+        const extracted = {
+          formatted_address: result.formatted_address,
+          place_id: result.place_id,
+          location: result.geometry.location,
+          street_number: null,
+          route: null,
+          locality: null,
+          postal_code: null,
+          administrative_area_level_2: null, // Provincia
+          country: null,
+          search_query_used: searchQuery
+        };
+        
+        for (const component of components) {
+          const types = component.types;
+          if (types.includes('street_number')) {
+            extracted.street_number = component.long_name;
+          } else if (types.includes('route')) {
+            extracted.route = component.long_name;
+          } else if (types.includes('locality')) {
+            extracted.locality = component.long_name;
+          } else if (types.includes('postal_code')) {
+            extracted.postal_code = component.long_name;
+          } else if (types.includes('administrative_area_level_2')) {
+            extracted.administrative_area_level_2 = component.short_name;
+          } else if (types.includes('country')) {
+            extracted.country = component.long_name;
+          }
+        }
+        
+        return res.json({ success: true, result: extracted });
+      }
+    } catch (err) {
+      lastError = err;
+      console.log(`Geocoding fallback failed for: ${searchQuery}`);
+    }
+  }
+  
+  // Se arriviamo qui, nessuna strategia ha funzionato
+  res.json({ success: false, status: 'NOT_FOUND', message: 'Indirizzo non trovato. Prova a inserire i dati manualmente.' });
 }));
 
 // API: Orders
@@ -358,6 +439,28 @@ app.patch('/api/orders/:id/display-number', requireAuth, asyncHandler(async (req
 app.post('/api/orders/reorder-numbers', requireAuth, asyncHandler(async (req, res) => {
   const result = await db.reorderDisplayNumbers();
   res.json({ success: true, reordered: result.reordered });
+}));
+
+// API: Duplicate order
+app.post('/api/orders/:id/duplicate', requireAuth, asyncHandler(async (req, res) => {
+  const order = await db.getOrderById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ error: 'Ordine non trovato' });
+  }
+  
+  // Create duplicate without ID and with new display number
+  const { id, order_display_number, created_at, updated_at, ...orderData } = order;
+  
+  const newOrder = await db.createOrder({
+    ...orderData,
+    status: 'pending',
+    tracking_code: null,
+    shipped_at: null,
+    delivered_at: null,
+    notes: order.notes ? `${order.notes}\n\n[Duplicato da ordine ${order.order_display_number || '#' + order.id}]` : `[Duplicato da ordine ${order.order_display_number || '#' + order.id}]`
+  });
+  
+  res.json({ success: true, order: newOrder });
 }));
 
 // API: Label Queue

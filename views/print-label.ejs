@@ -45,8 +45,10 @@
     
     .label-pair {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     
     .label {
@@ -118,6 +120,11 @@
     
     .recipient-country.italy {
       color: #2563eb;
+    }
+    
+    .recipient-country.international {
+      color: #dc2626;
+      font-size: 14px;
     }
     
     .print-btn {
@@ -235,10 +242,7 @@
       .label-pair {
         page-break-inside: avoid;
         margin-bottom: 15mm;
-        display: flex;
-        flex-direction: row;
         gap: 10mm;
-        justify-content: center;
       }
       
       .label { 
@@ -293,13 +297,15 @@
           <div class="label">
             <div class="label-type dest">DESTINATARIO</div>
             <div class="recipient-name"><%= order.customer_name %></div>
-            <div class="recipient-address"><%= order.customer_address %></div>
-            <div class="recipient-zip-city"><%= order.customer_zip %> <%= order.customer_city %></div>
-            <% if (order.customer_province) { %>
-              <div class="recipient-province">(<%= order.customer_province.toUpperCase() %>)</div>
+            <% if (order.customer_address) { %>
+              <div class="recipient-address"><%= order.customer_address %></div>
             <% } %>
-            <div class="recipient-country <%= (!order.customer_country || order.customer_country === 'Italia') ? 'italy' : '' %>">
-              <%= order.customer_country || 'Italia' %>
+            <div class="recipient-zip-city">
+              <%= order.customer_zip || '' %> <%= order.customer_city || '' %>
+              <% if (order.customer_province) { %>(<%= order.customer_province.toUpperCase() %>)<% } %>
+            </div>
+            <div class="recipient-country <%= (!order.customer_country || order.customer_country === 'Italia') ? 'italy' : 'international' %>">
+              <%= (order.customer_country || 'Italia').toUpperCase() %>
             </div>
           </div>
 
@@ -309,7 +315,7 @@
             <div class="recipient-name">Mauro Masucci</div>
             <div class="recipient-address">Via Strada di Spina, 2</div>
             <div class="recipient-zip-city">20054 Segrate (MI)</div>
-            <div class="recipient-country italy">Italia</div>
+            <div class="recipient-country italy">ITALIA</div>
           </div>
         </div>
         
