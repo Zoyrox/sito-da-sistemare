@@ -238,23 +238,68 @@ body::before {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 6px currentColor);
+  filter: drop-shadow(0 0 8px currentColor);
   transition: all 0.3s ease;
 }
 
 .nav-item:hover svg {
-  filter: drop-shadow(0 0 12px currentColor);
-  transform: scale(1.1);
+  filter: drop-shadow(0 0 20px currentColor);
+  transform: scale(1.15);
 }
 
 .nav-item.active svg {
-  filter: drop-shadow(0 0 15px var(--primary));
-  animation: iconPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 25px var(--primary));
+  animation: iconPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes iconPulse {
-  0%, 100% { filter: drop-shadow(0 0 10px var(--primary)); }
-  50% { filter: drop-shadow(0 0 18px var(--primary)); }
+  0%, 100% { 
+    filter: drop-shadow(0 0 15px var(--primary));
+    transform: scale(1);
+  }
+  50% { 
+    filter: drop-shadow(0 0 30px var(--primary));
+    transform: scale(1.08);
+  }
+}
+
+/* Enhanced Icon Glow for All Interactive Elements */
+.btn svg,
+.card-title svg,
+.stat-icon svg,
+.form-section-title svg {
+  filter: drop-shadow(0 0 8px currentColor);
+  transition: all 0.3s ease;
+}
+
+.btn:hover svg {
+  filter: drop-shadow(0 0 18px currentColor);
+  transform: scale(1.1);
+}
+
+.stat-card:hover .stat-icon svg {
+  filter: drop-shadow(0 0 25px currentColor);
+  transform: scale(1.2);
+  animation: iconGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes iconGlow {
+  from { filter: drop-shadow(0 0 10px currentColor); }
+  to { filter: drop-shadow(0 0 25px currentColor); }
+}
+
+/* Logo Icon Glow */
+.logo-icon {
+  animation: logoGlow 3s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4));
+  }
+  50% { 
+    filter: drop-shadow(0 0 30px rgba(249, 115, 22, 0.7));
+  }
 }
 
 .nav-badge {
@@ -1051,18 +1096,46 @@ body::before {
 
 .search-results-dropdown {
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 12px;
+  top: calc(100% + 8px);
+  left: 24px;
+  right: 24px;
   background: var(--bg-card);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  z-index: 100;
-  max-height: 350px;
+  z-index: 1000;
+  max-height: 400px;
   overflow-y: auto;
   backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.search-loading .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
 }
 
 .search-result-item {
@@ -1609,89 +1682,95 @@ body::before {
 /* Mobile */
 @media (max-width: 768px) {
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  .stat-card {
+    padding: 14px !important;
+  }
+  
+  .stat-header {
+    margin-bottom: 8px !important;
+  }
+  
+  .stat-label {
+    font-size: 10px !important;
+  }
+  
+  .stat-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .stat-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  .stat-value {
+    font-size: 20px !important;
+  }
+  
+  .stat-subtitle {
+    font-size: 10px !important;
   }
   
   .header {
-    padding: 14px 18px;
+    padding: 12px 16px;
   }
   
   .page-title h2 {
-    font-size: 20px;
+    font-size: 18px;
+  }
+  
+  .page-title p {
+    font-size: 11px;
   }
   
   .content {
-    padding: 16px;
+    padding: 12px;
   }
   
   .card-header {
-    padding: 16px 20px;
+    padding: 14px 16px;
   }
   
   .card-body {
-    padding: 20px;
+    padding: 16px;
   }
   
   .form-section {
-    padding: 20px;
+    padding: 16px;
   }
   
   .table th,
   .table td {
-    padding: 14px 16px;
-    font-size: 13px;
+    padding: 12px 14px;
+    font-size: 12px;
   }
   
   .btn {
-    padding: 12px 18px;
-    font-size: 13px;
+    padding: 10px 16px;
+    font-size: 12px;
   }
   
   .login-card {
-    padding: 36px 24px;
+    padding: 32px 20px;
   }
   
   .login-logo {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
   
   .login-card h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
   
   .filters-row {
     grid-template-columns: 1fr;
-  }
-  
-  .action-buttons {
-    gap: 6px;
-  }
-  
-  .btn-icon {
-    width: 38px;
-    height: 38px;
-  }
-  
-  .stat-value {
-    font-size: 26px;
-  }
-  
-  .toast-container {
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-  }
-  
-  .toast {
-    width: 100%;
-  }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-  .form-row {
-    grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .action-buttons {
@@ -1699,21 +1778,111 @@ body::before {
   }
   
   .btn-icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
+  }
+  
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+  
+  .toast {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 13px;
+  }
+  
+  /* Search dropdown mobile */
+  .search-results-dropdown {
+    left: 12px;
+    right: 12px;
+    max-height: 300px;
+  }
+  
+  .search-result-item {
+    padding: 12px 16px !important;
+  }
+  
+  .search-result-number {
+    font-size: 13px !important;
+    min-width: 55px !important;
+  }
+  
+  /* Sidebar mobile */
+  .sidebar {
+    width: 280px;
+  }
+  
+  .menu-toggle {
+    padding: 10px;
+  }
+  
+  .menu-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  
+  .stat-card {
+    padding: 10px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+  
+  .stat-header {
+    margin-bottom: 6px !important;
+  }
+  
+  .stat-label {
+    font-size: 9px !important;
+  }
+  
+  .stat-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .stat-icon svg {
+    width: 14px !important;
+    height: 14px !important;
   }
   
   .stat-value {
-    font-size: 24px;
+    font-size: 18px !important;
+  }
+  
+  .stat-subtitle {
+    font-size: 9px !important;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    gap: 3px;
+  }
+  
+  .btn-icon {
+    width: 32px;
+    height: 32px;
   }
   
   .pagination {
-    padding: 16px 10px;
+    padding: 12px 8px;
   }
   
   .pagination-btn {
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
   
   .sidebar {
@@ -1721,10 +1890,76 @@ body::before {
   }
   
   .search-tags {
-    gap: 6px;
+    gap: 4px;
+    margin-top: 10px !important;
   }
   
   .search-tag {
+    padding: 4px 8px;
+    font-size: 9px;
+  }
+  
+  .search-box-large input {
+    padding: 14px 16px 14px 44px !important;
+    font-size: 14px !important;
+  }
+  
+  .search-box-large svg {
+    left: 14px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+  
+  .header {
+    padding: 10px 12px;
+  }
+  
+  .page-title h2 {
+    font-size: 16px;
+  }
+  
+  .content {
+    padding: 10px;
+  }
+  
+  .card {
+    border-radius: var(--radius-sm);
+  }
+  
+  .card-header {
+    padding: 12px 14px;
+  }
+  
+  .card-body {
+    padding: 14px;
+  }
+  
+  /* Table mobile optimizations */
+  .table-container {
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+  
+  .order-number {
+    font-size: 12px;
+  }
+  
+  .cliente-nome,
+  .prodotto-nome {
+    font-size: 13px;
+  }
+  
+  .cliente-luogo,
+  .prodotto-qty {
+    font-size: 10px;
+  }
+  
+  .badge {
     padding: 5px 10px;
     font-size: 10px;
   }

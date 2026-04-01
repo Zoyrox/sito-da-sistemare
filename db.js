@@ -586,7 +586,7 @@ class AppDatabase {
         alluminio: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE product_model LIKE '%ALLUMINIO%' AND status != 'cancelled'").get(),
         subitoPickup: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE is_subito_pickup = 1 AND status != 'cancelled'").get(),
         totalOrders: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'cancelled'").get(),
-        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country IS NOT NULL AND customer_country != '' AND customer_country != 'Italia' AND customer_country != 'it' AND status != 'cancelled'").get(),
+        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country IS NOT NULL AND customer_country != '' AND customer_country != 'Italia' AND customer_country != 'it' AND customer_country != 'IT' AND customer_country != 'italia' AND status != 'cancelled'").get(),
         labelQueue: this.db.prepare("SELECT COUNT(*) as count FROM label_queue").get()
       };
     }

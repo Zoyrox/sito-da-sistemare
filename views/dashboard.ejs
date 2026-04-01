@@ -93,8 +93,8 @@
       <!-- Content -->
       <div class="content">
         <!-- Search Bar -->
-        <div class="card search-card" style="margin-bottom: 20px;">
-          <div class="card-body">
+        <div class="card search-card" style="margin-bottom: 20px; position: relative;">
+          <div class="card-body" style="position: relative;">
             <div class="search-box-large">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
               <input type="text" id="globalSearch" placeholder="Cerca per ID, Nome, Città, Provincia, Paese..." autocomplete="off">
@@ -106,120 +106,120 @@
               <span class="search-tag">Provincia: RM</span>
               <span class="search-tag">Paese: Italia</span>
             </div>
-            <div id="searchResults" class="search-results-dropdown" style="display: none;"></div>
           </div>
+          <div id="searchResults" class="search-results-dropdown" style="display: none;"></div>
         </div>
 
         <!-- Stats -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Ordini Oggi</span>
-              <div class="stat-icon blue">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Ordini Oggi</span>
+              <div class="stat-icon blue" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.today.count %></div>
-            <div class="stat-subtitle">€<%= Number(stats.today.revenue || 0).toFixed(2) %> fatturato</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.today.count %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">€<%= Number(stats.today.revenue || 0).toFixed(2) %></div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Da Spedire</span>
-              <div class="stat-icon yellow">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Da Spedire</span>
+              <div class="stat-icon yellow" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.toShip.count %></div>
-            <div class="stat-subtitle">in attesa</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.toShip.count %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">in attesa</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">In Transito</span>
-              <div class="stat-icon green">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"/><path d="M14 17h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">In Transito</span>
+              <div class="stat-icon green" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.inTransit.count %></div>
-            <div class="stat-subtitle">spedizioni</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.inTransit.count %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">spedizioni</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Fatturato Mese</span>
-              <div class="stat-icon orange">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Fatturato Mese</span>
+              <div class="stat-icon orange" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
               </div>
             </div>
-            <div class="stat-value">€<%= Number(stats.monthlyRevenue?.total || 0).toFixed(0) %></div>
-            <div class="stat-subtitle">questo mese</div>
+            <div class="stat-value" style="font-size: 26px;">€<%= Number(stats.monthlyRevenue?.total || 0).toFixed(0) %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">questo mese</div>
           </div>
 
-          <div class="stat-card revenue-card">
-            <div class="stat-header">
-              <span class="stat-label">Fatturato Mese Prec.</span>
-              <div class="stat-icon pink">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <div class="stat-card revenue-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Fatt. Mese Prec.</span>
+              <div class="stat-icon pink" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
               </div>
             </div>
-            <div class="stat-value">€<%= Number(stats.previousMonthRevenue?.total || 0).toFixed(0) %></div>
-            <div class="stat-subtitle">mese precedente</div>
+            <div class="stat-value" style="font-size: 26px;">€<%= Number(stats.previousMonthRevenue?.total || 0).toFixed(0) %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">mese prec.</div>
           </div>
 
-          <div class="stat-card revenue-card">
-            <div class="stat-header">
-              <span class="stat-label">Fatturato Totale</span>
-              <div class="stat-icon indigo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><path d="m17 12-5-5-5 5"/><path d="m17 12-5 5-5-5"/></svg>
+          <div class="stat-card revenue-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Fatturato Totale</span>
+              <div class="stat-icon indigo" style="width: 40px; height: 40px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
               </div>
             </div>
-            <div class="stat-value">€<%= Number(stats.totalRevenue?.total || 0).toFixed(0) %></div>
-            <div class="stat-subtitle">da inizio attività</div>
+            <div class="stat-value" style="font-size: 26px;">€<%= Number(stats.totalRevenue?.total || 0).toFixed(0) %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">totale</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Staffa Carbonio</span>
-              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366f1;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Carbonio</span>
+              <div class="stat-icon" style="width: 40px; height: 40px; background: rgba(99, 102, 241, 0.15); color: #6366f1;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.carbonio?.count || 0 %></div>
-            <div class="stat-subtitle">ordini totali</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.carbonio?.count || 0 %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">ordini</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Staffa Alluminio</span>
-              <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Alluminio</span>
+              <div class="stat-icon" style="width: 40px; height: 40px; background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.alluminio?.count || 0 %></div>
-            <div class="stat-subtitle">ordini totali</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.alluminio?.count || 0 %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">ordini</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Ritiro Subito</span>
-              <div class="stat-icon" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Ritiro Subito</span>
+              <div class="stat-icon" style="width: 40px; height: 40px; background: rgba(34, 197, 94, 0.15); color: #22c55e;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.subitoPickup?.count || 0 %></div>
-            <div class="stat-subtitle">in sede</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.subitoPickup?.count || 0 %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">in sede</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Internazionali</span>
-              <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <div class="stat-card" style="padding: 18px;">
+            <div class="stat-header" style="margin-bottom: 12px;">
+              <span class="stat-label" style="font-size: 11px;">Internazionali</span>
+              <div class="stat-icon" style="width: 40px; height: 40px; background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
               </div>
             </div>
-            <div class="stat-value"><%= stats.international?.count || 0 %></div>
-            <div class="stat-subtitle">spedizioni estere</div>
+            <div class="stat-value" style="font-size: 26px;"><%= stats.international?.count || 0 %></div>
+            <div class="stat-subtitle" style="font-size: 11px;">estere</div>
           </div>
         </div>
 
@@ -450,10 +450,11 @@
       }
     }
 
-    // Global search
+    // Global search with live dropdown
     const searchInput = document.getElementById('globalSearch');
     const searchResults = document.getElementById('searchResults');
     let searchTimeout;
+    let abortController = null;
 
     searchInput.addEventListener('input', (e) => {
       clearTimeout(searchTimeout);
@@ -464,12 +465,32 @@
         return;
       }
       
-      searchTimeout = setTimeout(() => performSearch(query), 300);
+      // Show loading state immediately
+      searchResults.innerHTML = '<div class="search-loading"><span class="loading-spinner"></span>Ricerca in corso...</div>';
+      searchResults.style.display = 'block';
+      
+      searchTimeout = setTimeout(() => performSearch(query), 200);
+    });
+
+    // Show dropdown on focus if there's text
+    searchInput.addEventListener('focus', () => {
+      const query = searchInput.value.trim();
+      if (query.length >= 2) {
+        searchResults.style.display = 'block';
+      }
     });
 
     async function performSearch(query) {
+      // Cancel previous request if exists
+      if (abortController) {
+        abortController.abort();
+      }
+      abortController = new AbortController();
+      
       try {
-        const res = await fetch(`/api/orders/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/orders/search?q=${encodeURIComponent(query)}`, {
+          signal: abortController.signal
+        });
         const data = await res.json();
         
         // Filter results for exact order number match if query is like #1, #123, etc.
@@ -483,29 +504,60 @@
           });
         }
         
-        renderSearchResults(data.orders);
+        renderSearchResults(data.orders, query);
       } catch (err) {
-        console.error('Search error:', err);
+        if (err.name !== 'AbortError') {
+          console.error('Search error:', err);
+          searchResults.innerHTML = '<div class="search-no-results">Errore durante la ricerca</div>';
+        }
       }
     }
 
-    function renderSearchResults(orders) {
+    function renderSearchResults(orders, query) {
       if (orders.length === 0) {
-        searchResults.innerHTML = '<div class="search-no-results">Nessun risultato trovato</div>';
+        searchResults.innerHTML = `
+          <div class="search-no-results" style="padding: 24px; text-align: center; color: var(--text-muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px; opacity: 0.5;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <div>Nessun risultato trovato per "${query}"</div>
+          </div>
+        `;
       } else {
-        searchResults.innerHTML = orders.map(order => `
-          <a href="/orders/${order.id}" class="search-result-item">
-            <div class="search-result-main">
-              <span class="search-result-number">${order.order_display_number || '#' + order.id}</span>
-              <span class="search-result-name">${order.customer_name}</span>
+        const resultsHtml = orders.slice(0, 10).map(order => `
+          <a href="/orders/${order.id}" class="search-result-item" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--glass-border); text-decoration: none; color: inherit; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+              <span class="search-result-number" style="font-family: monospace; font-weight: 600; color: var(--primary); font-size: 15px; min-width: 70px;">${order.order_display_number || '#' + order.id}</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">${order.customer_name}</div>
+                <div class="search-result-meta" style="font-size: 12px; color: var(--text-muted);">
+                  ${order.customer_city || ''} 
+                  ${order.customer_province ? '(' + order.customer_province + ')' : ''}
+                  ${order.customer_country && order.customer_country !== 'Italia' ? '<span style="color: #06b6d4; margin-left: 8px;">🌍 ' + order.customer_country + '</span>' : ''}
+                </div>
+              </div>
             </div>
-            <div class="search-result-meta">
-              ${order.customer_city || ''} 
-              ${order.customer_province ? '(' + order.customer_province + ')' : ''}
-              ${order.customer_country && order.customer_country !== 'Italia' ? '• ' + order.customer_country : ''}
-            </div>
+            <span class="badge ${order.status === 'pending' ? 'badge-pending' : order.status === 'processing' ? 'badge-processing' : order.status === 'shipped' ? 'badge-shipped' : order.status === 'delivered' ? 'badge-delivered' : 'badge-cancelled'}" style="font-size: 10px; margin-left: 12px;">
+              ${order.status === 'pending' ? 'In Attesa' : order.status === 'processing' ? 'In Lavorazione' : order.status === 'shipped' ? 'Spedito' : order.status === 'delivered' ? 'Consegnato' : 'Annullato'}
+            </span>
           </a>
         `).join('');
+        
+        const moreResults = orders.length > 10 ? `
+          <div style="padding: 12px 20px; text-align: center; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--glass-border);">
+            E altri ${orders.length - 10} risultati...
+          </div>
+        ` : '';
+        
+        searchResults.innerHTML = resultsHtml + moreResults;
+        
+        // Add hover effect via JS since we're using inline styles
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            item.style.background = 'var(--glass-highlight)';
+          });
+          item.addEventListener('mouseleave', () => {
+            item.style.background = 'transparent';
+          });
+        });
       }
       searchResults.style.display = 'block';
     }
@@ -513,6 +565,13 @@
     // Hide search results when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.search-card')) {
+        searchResults.style.display = 'none';
+      }
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
         searchResults.style.display = 'none';
       }
     });
