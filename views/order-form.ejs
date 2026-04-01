@@ -487,8 +487,15 @@
 
         const data = await res.json();
 
+        // Gestione errori HTTP
+        if (!res.ok) {
+          showToast(data.error || 'Errore analisi AI', 'error');
+          return;
+        }
+        
+        // Se abbiamo dati validi, procedi con il successo
         if (data.error) {
-          showToast('Errore analisi AI', 'error');
+          showToast(data.error || 'Errore analisi AI', 'error');
           return;
         }
 

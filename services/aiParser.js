@@ -457,10 +457,20 @@ ${text}
     const match = aiResult.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('JSON non trovato');
     
-    const parsedData = JSON.parse(match[0]);
+    let parsedData = JSON.parse(match[0]);
+    
+    // Normalizza i valori null (converte stringa "null" in null reale)
+    const normalizeNull = (val) => {
+      if (val === 'null' || val === 'NULL' || val === 'Null') return null;
+      return val;
+    };
+    
+    Object.keys(parsedData).forEach(key => {
+      parsedData[key] = normalizeNull(parsedData[key]);
+    });
     
     // Post-processing: verifica e correggi il paese
-    if (!parsedData.country || parsedData.country === 'null') {
+    if (!parsedData.country || parsedData.country === null) {
       parsedData.country = detectCountry(
         parsedData.customer_city,
         parsedData.customer_zip,
@@ -470,7 +480,7 @@ ${text}
     }
     
     // Post-processing: verifica e correggi il tipo di staffa
-    if (!parsedData.product_model || parsedData.product_model === 'null') {
+    if (!parsedData.product_model || parsedData.product_model === null) {
       if (staffaInfo) {
         parsedData.product_model = staffaInfo.model;
       }

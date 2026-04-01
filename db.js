@@ -565,6 +565,12 @@ class AppDatabase {
   // Stats
   getDashboardStats() {
     const today = new Date().toISOString().split('T')[0];
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    const prevMonthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
 
     if (this.isBetter) {
       return {
@@ -574,11 +580,13 @@ class AppDatabase {
         toReview: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE status = 'delivered' AND DATE(created_at) >= DATE('now', '-30 days')").get(),
         urgent: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE is_urgent = 1 AND status NOT IN ('delivered', 'cancelled')").get(),
         monthlyRevenue: this.db.prepare("SELECT COALESCE(SUM(price_total), 0) as total FROM orders WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') AND status != 'cancelled'").get(),
+        previousMonthRevenue: this.db.prepare(`SELECT COALESCE(SUM(price_total), 0) as total FROM orders WHERE strftime('%Y-%m', created_at) = ? AND status != 'cancelled'`).get(prevMonthStr),
+        totalRevenue: this.db.prepare("SELECT COALESCE(SUM(price_total), 0) as total FROM orders WHERE status != 'cancelled'").get(),
         carbonio: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE product_model LIKE '%CARBONIO%' AND status != 'cancelled'").get(),
         alluminio: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE product_model LIKE '%ALLUMINIO%' AND status != 'cancelled'").get(),
         subitoPickup: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE is_subito_pickup = 1 AND status != 'cancelled'").get(),
         totalOrders: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE status != 'cancelled'").get(),
-        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country IS NOT NULL AND customer_country != '' AND customer_country != 'Italia' AND status != 'cancelled'").get(),
+        international: this.db.prepare("SELECT COUNT(*) as count FROM orders WHERE customer_country IS NOT NULL AND customer_country != '' AND customer_country != 'Italia' AND customer_country != 'it' AND status != 'cancelled'").get(),
         labelQueue: this.db.prepare("SELECT COUNT(*) as count FROM label_queue").get()
       };
     }

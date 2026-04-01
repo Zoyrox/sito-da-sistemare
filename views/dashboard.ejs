@@ -156,6 +156,28 @@
             <div class="stat-subtitle">questo mese</div>
           </div>
 
+          <div class="stat-card revenue-card">
+            <div class="stat-header">
+              <span class="stat-label">Fatturato Mese Prec.</span>
+              <div class="stat-icon pink">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              </div>
+            </div>
+            <div class="stat-value">€<%= Number(stats.previousMonthRevenue?.total || 0).toFixed(0) %></div>
+            <div class="stat-subtitle">mese precedente</div>
+          </div>
+
+          <div class="stat-card revenue-card">
+            <div class="stat-header">
+              <span class="stat-label">Fatturato Totale</span>
+              <div class="stat-icon indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><path d="m17 12-5-5-5 5"/><path d="m17 12-5 5-5-5"/></svg>
+              </div>
+            </div>
+            <div class="stat-value">€<%= Number(stats.totalRevenue?.total || 0).toFixed(0) %></div>
+            <div class="stat-subtitle">da inizio attività</div>
+          </div>
+
           <div class="stat-card">
             <div class="stat-header">
               <span class="stat-label">Staffa Carbonio</span>
