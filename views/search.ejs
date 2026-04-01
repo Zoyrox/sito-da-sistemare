@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
+  <link rel="icon" type="image/png" href="/img/logo.png">
 </head>
 <body>
   <div class="app-container">
@@ -16,8 +16,8 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <div class="logo-icon" style="background: transparent; box-shadow: none;">
+            <img src="/img/logo.png" alt="MotoStaffa Logo" style="width: 100%; height: 100%; object-fit: contain;">
           </div>
           <div class="logo-text">
             <h1>MotoStaffa</h1>
@@ -37,20 +37,15 @@
         </a>
         <a href="/search" class="nav-item active">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          Ricerca Avanzata
+          Ricerca
         </a>
         <a href="/labels/queue" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-          Coda Etichette
+          Etichette
         </a>
         <a href="/stats" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
           Statistiche
-        </a>
-        <div class="sidebar-divider"></div>
-        <a href="/api/export" class="nav-item" download>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Esporta Dati
         </a>
       </nav>
 
@@ -108,7 +103,7 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Risultati</h3>
-            <span id="resultsCount" style="font-size: 13px; color: var(--text-muted);">0 ordini trovati</span>
+            <span id="resultsCount" style="font-size: 13px; color: var(--text-muted);">Caricamento...</span>
           </div>
           <div class="table-container">
             <table class="table" id="resultsTable">
@@ -129,6 +124,13 @@
             </table>
           </div>
           
+          <!-- Pagination -->
+          <div class="pagination" id="pagination" style="display: none;">
+            <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">← Precedente</button>
+            <span class="pagination-info" id="pageInfo">Pagina 1 di 1</span>
+            <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">Successiva →</button>
+          </div>
+          
           <div id="emptyState" class="empty-state" style="display: none;">
             <div class="empty-state-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -141,8 +143,8 @@
             <div class="empty-state-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </div>
-            <h3>Inizia a cercare</h3>
-            <p>Inserisci un termine per cercare tra gli ordini</p>
+            <h3>Caricamento ordini...</h3>
+            <p>Sto recuperando tutti gli ordini dal database</p>
           </div>
         </div>
       </div>
@@ -162,44 +164,118 @@
     const resultsCount = document.getElementById('resultsCount');
     const emptyState = document.getElementById('emptyState');
     const initialState = document.getElementById('initialState');
+    const pagination = document.getElementById('pagination');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    let allOrders = [];
+    let filteredOrders = [];
+    let currentPage = 1;
+    const itemsPerPage = 15;
     let searchTimeout;
+
+    // Load all orders on page load
+    async function loadAllOrders() {
+      try {
+        const res = await fetch('/api/orders');
+        const data = await res.json();
+        allOrders = data.orders || [];
+        filteredOrders = [...allOrders];
+        initialState.style.display = 'none';
+        renderResults();
+      } catch (err) {
+        console.error('Error loading orders:', err);
+        initialState.innerHTML = `
+          <div class="empty-state-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h3>Errore di caricamento</h3>
+          <p>Impossibile caricare gli ordini. Riprova più tardi.</p>
+        `;
+      }
+    }
 
     searchInput.addEventListener('input', (e) => {
       clearTimeout(searchTimeout);
       const query = e.target.value.trim();
       
-      if (query.length === 0) {
-        resultsBody.innerHTML = '';
-        resultsCount.textContent = '0 ordini trovati';
-        emptyState.style.display = 'none';
-        initialState.style.display = 'block';
-        return;
-      }
-      
-      initialState.style.display = 'none';
       searchTimeout = setTimeout(() => performSearch(query), 300);
     });
 
-    async function performSearch(query) {
-      try {
-        const res = await fetch(`/api/orders/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        renderResults(data.orders);
-      } catch (err) {
-        showToast('Errore durante la ricerca', 'error');
+    function performSearch(query) {
+      currentPage = 1;
+      
+      if (query.length === 0) {
+        filteredOrders = [...allOrders];
+      } else {
+        const searchLower = query.toLowerCase().trim();
+        
+        // Check if searching by exact order number (e.g., #1 or #123)
+        const orderNumberMatch = searchLower.match(/^#?(\d+)$/);
+        const isExactOrderSearch = orderNumberMatch !== null;
+        const exactOrderNum = isExactOrderSearch ? orderNumberMatch[1] : null;
+        
+        filteredOrders = allOrders.filter(order => {
+          // If searching by exact order number, match only exact number
+          if (isExactOrderSearch) {
+            const orderDisplayNum = order.order_display_number ? order.order_display_number.replace('#', '') : order.id.toString();
+            const orderNum = order.order_number || '';
+            return orderDisplayNum === exactOrderNum || orderNum === exactOrderNum || order.id.toString() === exactOrderNum;
+          }
+          
+          // Otherwise, do partial matching on other fields
+          return (
+            (order.customer_name && order.customer_name.toLowerCase().includes(searchLower)) ||
+            (order.customer_phone && order.customer_phone.includes(query)) ||
+            (order.customer_email && order.customer_email.toLowerCase().includes(searchLower)) ||
+            (order.customer_city && order.customer_city.toLowerCase().includes(searchLower)) ||
+            (order.customer_province && order.customer_province.toLowerCase().includes(searchLower)) ||
+            (order.customer_country && order.customer_country.toLowerCase().includes(searchLower)) ||
+            (order.tracking_code && order.tracking_code.toLowerCase().includes(searchLower))
+          );
+        });
       }
+      
+      renderResults();
     }
 
-    function renderResults(orders) {
-      resultsCount.textContent = `${orders.length} ordine${orders.length !== 1 ? 'i' : ''} trovato${orders.length !== 1 ? 'i' : ''}`;
+    function renderResults() {
+      const totalOrders = filteredOrders.length;
       
-      if (orders.length === 0) {
+      // Update count with proper Italian grammar
+      if (totalOrders === 0) {
+        resultsCount.textContent = 'Nessun ordine trovato';
+      } else if (totalOrders === 1) {
+        resultsCount.textContent = '1 ordine trovato';
+      } else {
+        resultsCount.textContent = `${totalOrders} ordini trovati`;
+      }
+      
+      if (totalOrders === 0) {
         resultsBody.innerHTML = '';
         emptyState.style.display = 'block';
+        pagination.style.display = 'none';
         return;
       }
       
       emptyState.style.display = 'none';
+      
+      // Pagination
+      const totalPages = Math.ceil(totalOrders / itemsPerPage);
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageOrders = filteredOrders.slice(start, end);
+      
+      // Update pagination controls
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Pagina ${currentPage} di ${totalPages}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+      } else {
+        pagination.style.display = 'none';
+      }
       
       const badges = { 
         pending: 'badge-pending', 
@@ -216,7 +292,7 @@
         cancelled: 'Annullato' 
       };
       
-      resultsBody.innerHTML = orders.map(order => `
+      resultsBody.innerHTML = pageOrders.map(order => `
         <tr onclick="window.location.href='/orders/${order.id}'" style="cursor: pointer;">
           <td>
             <span class="order-number">${order.order_display_number || '#' + order.id}</span>
@@ -258,6 +334,17 @@
       `).join('');
     }
 
+    function changePage(direction) {
+      const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+      const newPage = currentPage + direction;
+      
+      if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        renderResults();
+        document.getElementById('resultsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
     // Toast
     function showToast(msg, type) {
       const container = document.getElementById('toastContainer');
@@ -268,9 +355,11 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // Focus on search input
+    // Load all orders on page load
     document.addEventListener('DOMContentLoaded', () => {
-      searchInput.focus();
+      loadAllOrders();
+      
+      // If there's a query in URL, perform search
       if (searchInput.value.length >= 1) {
         performSearch(searchInput.value);
       }

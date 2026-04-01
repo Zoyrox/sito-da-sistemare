@@ -39,148 +39,72 @@ async function geminiChat(prompt) {
   throw new Error(`Nessun modello disponibile. Ultimo errore: ${lastError?.message}`);
 }
 
-// Mappa dei paesi con codici ISO per rilevamento automatico
-// Formato: nome_paese: [nome_visualizzato, codice_iso]
+// Mappa dei paesi per rilevamento automatico
 const COUNTRY_MAP = {
   // Italia
-  'italia': ['Italia', 'IT'], 'italy': ['Italia', 'IT'], 'it': ['Italia', 'IT'],
+  'italia': 'Italia', 'italy': 'Italia', 'it': 'Italia',
   // Svizzera
-  'svizzera': ['Svizzera', 'CH'], 'switzerland': ['Svizzera', 'CH'], 'schweiz': ['Svizzera', 'CH'], 'ch': ['Svizzera', 'CH'],
+  'svizzera': 'Svizzera', 'switzerland': 'Svizzera', 'schweiz': 'Svizzera', 'ch': 'Svizzera',
   // San Marino
-  'san marino': ['San Marino', 'SM'], 'sanmarino': ['San Marino', 'SM'], 'sm': ['San Marino', 'SM'],
+  'san marino': 'San Marino', 'sanmarino': 'San Marino',
   // Città del Vaticano
-  'vaticano': ['Città del Vaticano', 'VA'], 'vatican': ['Città del Vaticano', 'VA'], 'va': ['Città del Vaticano', 'VA'],
+  'vaticano': 'Città del Vaticano', 'vatican': 'Città del Vaticano',
   // Francia
-  'francia': ['Francia', 'FR'], 'france': ['Francia', 'FR'], 'fr': ['Francia', 'FR'],
+  'francia': 'Francia', 'france': 'Francia', 'fr': 'Francia',
   // Germania
-  'germania': ['Germania', 'DE'], 'germany': ['Germania', 'DE'], 'deutschland': ['Germania', 'DE'], 'de': ['Germania', 'DE'],
+  'germania': 'Germania', 'germany': 'Germania', 'deutschland': 'Germania', 'de': 'Germania',
   // Austria
-  'austria': ['Austria', 'AT'], 'österreich': ['Austria', 'AT'], 'at': ['Austria', 'AT'],
+  'austria': 'Austria', 'österreich': 'Austria', 'at': 'Austria',
   // Slovenia
-  'slovenia': ['Slovenia', 'SI'], 'slovenija': ['Slovenia', 'SI'], 'si': ['Slovenia', 'SI'],
+  'slovenia': 'Slovenia', 'slovenija': 'Slovenia', 'si': 'Slovenia',
   // Croazia
-  'croazia': ['Croazia', 'HR'], 'croatia': ['Croazia', 'HR'], 'hr': ['Croazia', 'HR'],
+  'croazia': 'Croazia', 'croatia': 'Croazia', 'hr': 'Croazia',
   // Spagna
-  'spagna': ['Spagna', 'ES'], 'spain': ['Spagna', 'ES'], 'españa': ['Spagna', 'ES'], 'es': ['Spagna', 'ES'],
+  'spagna': 'Spagna', 'spain': 'Spagna', 'españa': 'Spagna', 'es': 'Spagna',
   // Regno Unito
-  'regno unito': ['Regno Unito', 'GB'], 'uk': ['Regno Unito', 'GB'], 'united kingdom': ['Regno Unito', 'GB'], 'gb': ['Regno Unito', 'GB'],
+  'regno unito': 'Regno Unito', 'uk': 'Regno Unito', 'united kingdom': 'Regno Unito', 'gb': 'Regno Unito',
   // Belgio
-  'belgio': ['Belgio', 'BE'], 'belgium': ['Belgio', 'BE'], 'belgië': ['Belgio', 'BE'], 'be': ['Belgio', 'BE'],
-  // Olanda/Paesi Bassi
-  'olanda': ['Paesi Bassi', 'NL'], 'olande': ['Paesi Bassi', 'NL'], 'paesi bassi': ['Paesi Bassi', 'NL'], 'netherlands': ['Paesi Bassi', 'NL'], 'nl': ['Paesi Bassi', 'NL'],
+  'belgio': 'Belgio', 'belgium': 'Belgio', 'belgië': 'Belgio', 'be': 'Belgio',
+  // Olanda
+  'olanda': 'Paesi Bassi', 'paesi bassi': 'Paesi Bassi', 'netherlands': 'Paesi Bassi', 'nl': 'Paesi Bassi',
   // Lussemburgo
-  'lussemburgo': ['Lussemburgo', 'LU'], 'luxembourg': ['Lussemburgo', 'LU'], 'lu': ['Lussemburgo', 'LU'],
+  'lussemburgo': 'Lussemburgo', 'luxembourg': 'Lussemburgo', 'lu': 'Lussemburgo',
   // Portogallo
-  'portogallo': ['Portogallo', 'PT'], 'portugal': ['Portogallo', 'PT'], 'pt': ['Portogallo', 'PT'],
+  'portogallo': 'Portogallo', 'portugal': 'Portogallo', 'pt': 'Portogallo',
   // Polonia
-  'polonia': ['Polonia', 'PL'], 'poland': ['Polonia', 'PL'], 'pl': ['Polonia', 'PL'],
+  'polonia': 'Polonia', 'poland': 'Polonia', 'pl': 'Polonia',
   // Romania
-  'romania': ['Romania', 'RO'], 'ro': ['Romania', 'RO'],
+  'romania': 'Romania', 'ro': 'Romania',
   // Bulgaria
-  'bulgaria': ['Bulgaria', 'BG'], 'bg': ['Bulgaria', 'BG'],
+  'bulgaria': 'Bulgaria', 'bg': 'Bulgaria',
   // Grecia
-  'grecia': ['Grecia', 'GR'], 'greece': ['Grecia', 'GR'], 'gr': ['Grecia', 'GR'],
+  'grecia': 'Grecia', 'greece': 'Grecia', 'gr': 'Grecia',
   // Ungheria
-  'ungheria': ['Ungheria', 'HU'], 'hungary': ['Ungheria', 'HU'], 'hu': ['Ungheria', 'HU'],
+  'ungheria': 'Ungheria', 'hungary': 'Ungheria', 'hu': 'Ungheria',
   // Repubblica Ceca
-  'repubblica ceca': ['Repubblica Ceca', 'CZ'], 'czech republic': ['Repubblica Ceca', 'CZ'], 'česká republika': ['Repubblica Ceca', 'CZ'], 'cz': ['Repubblica Ceca', 'CZ'],
+  'repubblica ceca': 'Repubblica Ceca', 'czech republic': 'Repubblica Ceca', 'česká republika': 'Repubblica Ceca', 'cz': 'Repubblica Ceca',
   // Slovacchia
-  'slovacchia': ['Slovacchia', 'SK'], 'slovakia': ['Slovacchia', 'SK'], 'sk': ['Slovacchia', 'SK'],
+  'slovacchia': 'Slovacchia', 'slovakia': 'Slovacchia', 'sk': 'Slovacchia',
   // Danimarca
-  'danimarca': ['Danimarca', 'DK'], 'denmark': ['Danimarca', 'DK'], 'dk': ['Danimarca', 'DK'],
+  'danimarca': 'Danimarca', 'denmark': 'Danimarca', 'dk': 'Danimarca',
   // Svezia
-  'svezia': ['Svezia', 'SE'], 'sweden': ['Svezia', 'SE'], 'sverige': ['Svezia', 'SE'], 'se': ['Svezia', 'SE'],
+  'svezia': 'Svezia', 'sweden': 'Svezia', 'sverige': 'Svezia', 'se': 'Svezia',
   // Norvegia
-  'norvegia': ['Norvegia', 'NO'], 'norway': ['Norvegia', 'NO'], 'no': ['Norvegia', 'NO'],
+  'norvegia': 'Norvegia', 'norway': 'Norvegia', 'no': 'Norvegia',
   // Finlandia
-  'finlandia': ['Finlandia', 'FI'], 'finland': ['Finlandia', 'FI'], 'fi': ['Finlandia', 'FI'],
+  'finlandia': 'Finlandia', 'finland': 'Finlandia', 'fi': 'Finlandia',
   // Irlanda
-  'irlanda': ['Irlanda', 'IE'], 'ireland': ['Irlanda', 'IE'], 'ie': ['Irlanda', 'IE'],
+  'irlanda': 'Irlanda', 'ireland': 'Irlanda', 'ie': 'Irlanda',
   // Estonia
-  'estonia': ['Estonia', 'EE'], 'ee': ['Estonia', 'EE'],
+  'estonia': 'Estonia', 'ee': 'Estonia',
   // Lettonia
-  'lettonia': ['Lettonia', 'LV'], 'latvia': ['Lettonia', 'LV'], 'lv': ['Lettonia', 'LV'],
+  'lettonia': 'Lettonia', 'latvia': 'Lettonia', 'lv': 'Lettonia',
   // Lituania
-  'lituania': ['Lituania', 'LT'], 'lithuania': ['Lituania', 'LT'], 'lt': ['Lituania', 'LT'],
+  'lituania': 'Lituania', 'lithuania': 'Lituania', 'lt': 'Lituania',
   // Malta
-  'malta': ['Malta', 'MT'], 'mt': ['Malta', 'MT'],
+  'malta': 'Malta', 'mt': 'Malta',
   // Cipro
-  'cipro': ['Cipro', 'CY'], 'cyprus': ['Cipro', 'CY'], 'cy': ['Cipro', 'CY'],
-  // Stati Uniti
-  'stati uniti': ['Stati Uniti', 'US'], 'stati uniti d america': ['Stati Uniti', 'US'], 'united states': ['Stati Uniti', 'US'], 'usa': ['Stati Uniti', 'US'], 'us': ['Stati Uniti', 'US'],
-  // Canada
-  'canada': ['Canada', 'CA'], 'ca': ['Canada', 'CA'],
-  // Australia
-  'australia': ['Australia', 'AU'], 'au': ['Australia', 'AU'],
-  // Russia
-  'russia': ['Russia', 'RU'], 'ru': ['Russia', 'RU'],
-  // Ucraina
-  'ucraina': ['Ucraina', 'UA'], 'ukraine': ['Ucraina', 'UA'], 'ua': ['Ucraina', 'UA'],
-  // Turchia
-  'turchia': ['Turchia', 'TR'], 'turkey': ['Turchia', 'TR'], 'tr': ['Turchia', 'TR'],
-  // Giappone
-  'giappone': ['Giappone', 'JP'], 'japan': ['Giappone', 'JP'], 'jp': ['Giappone', 'JP'],
-  // Cina
-  'cina': ['Cina', 'CN'], 'china': ['Cina', 'CN'], 'cn': ['Cina', 'CN'],
-  // India
-  'india': ['India', 'IN'], 'in': ['India', 'IN'],
-  // Brasile
-  'brasile': ['Brasile', 'BR'], 'brazil': ['Brasile', 'BR'], 'br': ['Brasile', 'BR'],
-  // Argentina
-  'argentina': ['Argentina', 'AR'], 'ar': ['Argentina', 'AR'],
-  // Messico
-  'messico': ['Messico', 'MX'], 'mexico': ['Messico', 'MX'], 'mx': ['Messico', 'MX'],
-  // Sudafrica
-  'sudafrica': ['Sudafrica', 'ZA'], 'south africa': ['Sudafrica', 'ZA'], 'za': ['Sudafrica', 'ZA'],
-  // Emirati Arabi
-  'emirati arabi': ['Emirati Arabi Uniti', 'AE'], 'emirati arabi uniti': ['Emirati Arabi Uniti', 'AE'], 'uae': ['Emirati Arabi Uniti', 'AE'], 'ae': ['Emirati Arabi Uniti', 'AE'],
-  // Arabia Saudita
-  'arabia saudita': ['Arabia Saudita', 'SA'], 'saudi arabia': ['Arabia Saudita', 'SA'], 'sa': ['Arabia Saudita', 'SA'],
-  // Israele
-  'israele': ['Israele', 'IL'], 'israel': ['Israele', 'IL'], 'il': ['Israele', 'IL'],
-  // Corea del Sud
-  'corea del sud': ['Corea del Sud', 'KR'], 'south korea': ['Corea del Sud', 'KR'], 'kr': ['Corea del Sud', 'KR'],
-  // Thailandia
-  'thailandia': ['Thailandia', 'TH'], 'thailand': ['Thailandia', 'TH'], 'th': ['Thailandia', 'TH'],
-  // Singapore
-  'singapore': ['Singapore', 'SG'], 'sg': ['Singapore', 'SG'],
-  // Malesia
-  'malesia': ['Malesia', 'MY'], 'malaysia': ['Malesia', 'MY'], 'my': ['Malesia', 'MY'],
-  // Indonesia
-  'indonesia': ['Indonesia', 'ID'], 'id': ['Indonesia', 'ID'],
-  // Filippine
-  'filippine': ['Filippine', 'PH'], 'philippines': ['Filippine', 'PH'], 'ph': ['Filippine', 'PH'],
-  // Vietnam
-  'vietnam': ['Vietnam', 'VN'], 'viet nam': ['Vietnam', 'VN'], 'vn': ['Vietnam', 'VN'],
-  // Nuova Zelanda
-  'nuova zelanda': ['Nuova Zelanda', 'NZ'], 'new zealand': ['Nuova Zelanda', 'NZ'], 'nz': ['Nuova Zelanda', 'NZ'],
-  // Serbia
-  'serbia': ['Serbia', 'RS'], 'rs': ['Serbia', 'RS'],
-  // Montenegro
-  'montenegro': ['Montenegro', 'ME'], 'me': ['Montenegro', 'ME'],
-  // Macedonia
-  'macedonia': ['Macedonia del Nord', 'MK'], 'north macedonia': ['Macedonia del Nord', 'MK'], 'mk': ['Macedonia del Nord', 'MK'],
-  // Albania
-  'albania': ['Albania', 'AL'], 'al': ['Albania', 'AL'],
-  // Kosovo
-  'kosovo': ['Kosovo', 'XK'], 'xk': ['Kosovo', 'XK'],
-  // Bosnia
-  'bosnia': ['Bosnia ed Erzegovina', 'BA'], 'bosnia ed erzegovina': ['Bosnia ed Erzegovina', 'BA'], 'ba': ['Bosnia ed Erzegovina', 'BA'],
-  // Moldavia
-  'moldavia': ['Moldavia', 'MD'], 'moldova': ['Moldavia', 'MD'], 'md': ['Moldavia', 'MD'],
-  // Bielorussia
-  'bielorussia': ['Bielorussia', 'BY'], 'belarus': ['Bielorussia', 'BY'], 'by': ['Bielorussia', 'BY'],
-  // Islanda
-  'islanda': ['Islanda', 'IS'], 'iceland': ['Islanda', 'IS'], 'is': ['Islanda', 'IS'],
-  // Liechtenstein
-  'liechtenstein': ['Liechtenstein', 'LI'], 'li': ['Liechtenstein', 'LI'],
-  // Monaco
-  'monaco': ['Monaco', 'MC'], 'mc': ['Monaco', 'MC'],
-  // Andorra
-  'andorra': ['Andorra', 'AD'], 'ad': ['Andorra', 'AD'],
-  // Città del Vaticano (già presente)
-  // Malta (già presente)
-  // Cipro (già presente)
+  'cipro': 'Cipro', 'cyprus': 'Cipro', 'cy': 'Cipro'
 };
 
 // Province italiane per rilevamento
@@ -307,76 +231,54 @@ const CITY_TO_COUNTRY = {
   'dublino': 'Irlanda', 'dublin': 'Irlanda'
 };
 
-// Rileva il paese in base a vari fattori - restituisce formato "Nome (XX)"
+// Rileva il paese in base a vari fattori
 function detectCountry(city, zip, province, text) {
   const textLower = text.toLowerCase();
   const cityLower = (city || '').toLowerCase();
-  let countryResult = null;
   
   // 1. Cerca esplicitamente il nome del paese nel testo
   for (const [key, value] of Object.entries(COUNTRY_MAP)) {
     if (textLower.includes(key.toLowerCase())) {
-      countryResult = value;
-      break;
+      return value;
     }
   }
   
   // 2. Rileva dalla città
-  if (!countryResult && cityLower && CITY_TO_COUNTRY[cityLower]) {
-    const cityCountry = CITY_TO_COUNTRY[cityLower];
-    // Trova il codice ISO corrispondente
-    for (const [key, value] of Object.entries(COUNTRY_MAP)) {
-      if (value[0] === cityCountry) {
-        countryResult = value;
-        break;
-      }
-    }
+  if (cityLower && CITY_TO_COUNTRY[cityLower]) {
+    return CITY_TO_COUNTRY[cityLower];
   }
   
   // 3. Rileva dal CAP
-  if (!countryResult && zip) {
+  if (zip) {
     const zipClean = zip.replace(/\s/g, '');
     
     // CAP italiani: 5 cifre che iniziano con 0-9 (range 00100-98100)
     if (/^\d{5}$/.test(zipClean)) {
       const zipNum = parseInt(zipClean);
       if (zipNum >= 1000 && zipNum <= 98100) {
-        countryResult = ['Italia', 'IT'];
+        // Verifica se è un CAP italiano valido
+        return 'Italia';
       }
     }
     
     // Verifica pattern esteri
-    if (!countryResult) {
-      for (const [countryName, pattern] of Object.entries(FOREIGN_ZIP_PATTERNS)) {
-        if (pattern.test(zipClean)) {
-          // Trova il codice ISO per questo paese
-          for (const [key, value] of Object.entries(COUNTRY_MAP)) {
-            if (value[0] === countryName) {
-              countryResult = value;
-              break;
-            }
-          }
-          break;
-        }
+    for (const [country, pattern] of Object.entries(FOREIGN_ZIP_PATTERNS)) {
+      if (pattern.test(zipClean)) {
+        return country;
       }
     }
   }
   
   // 4. Rileva dalla provincia (solo province italiane)
-  if (!countryResult && province) {
+  if (province) {
     const provLower = province.toLowerCase().replace(/[()]/g, '');
     if (ITALIAN_PROVINCES[provLower] || Object.values(ITALIAN_PROVINCES).some(p => p.toLowerCase() === provLower)) {
-      countryResult = ['Italia', 'IT'];
+      return 'Italia';
     }
   }
   
   // Default: Italia
-  if (!countryResult) {
-    countryResult = ['Italia', 'IT'];
-  }
-  
-  // Restituisci nel formato "Nome (XX)"
-  return `${countryResult[0]} (${countryResult[1]})`;
+  return 'Italia';
 }
 
 // Rileva il tipo di staffa dal testo
@@ -508,39 +410,41 @@ Analizza il testo fornito ed estrai TUTTE le informazioni disponibili.
 REGOLE IMPORTANTI:
 1. Se trovi menzioni di "carbonio", "carbon", "carbone" → il prodotto è CARBONIO
 2. Se trovi menzioni di "alluminio", "aluminium", "aluminum" → il prodotto è ALLUMINIO
-3. Per il paese: analizza la città, il CAP e il contesto. RESTITUISCI SEMPRE nel formato "Nome Paese (XX)" dove XX è il codice ISO a 2 lettere
-4. Se il CAP è di 4 cifre e non inizia con 0 → probabilmente è Svizzera (CH)
-5. Se il CAP inizia con 4789 → San Marino (SM)
-6. Se il CAP è 00120 → Città del Vaticano (VA)
-7. Se la provincia è una sigla italiana (RM, MI, TO, ecc.) → paese = Italia (IT)
-8. Estrai anche: data vendita (se presente), codice tracking (se presente), note rilevanti
-9. Per la fonte: cerca parole come "facebook", "messenger", "subito", "whatsapp", "telegram"
-10. Se trovi "urgente" o "subito" nelle note, marca come urgente
+3. Per il paese: analizza la città, il CAP e il contesto. Se la città è svizzera (Zurigo, Ginevra, ecc.) → paese = Svizzera
+4. Se il CAP è di 4 cifre e non inizia con 0 → probabilmente è Svizzera
+5. Se il CAP inizia con 4789 → San Marino
+6. Se il CAP è 00120 → Città del Vaticano
+7. Se la provincia è una sigla italiana (RM, MI, TO, ecc.) → paese = Italia
 
-ESEMPI FORMATO PAESE:
-- Italia → "Italia (IT)"
-- Svizzera → "Svizzera (CH)"
-- Stati Uniti → "Stati Uniti (US)"
-- Germania → "Germania (DE)"
-- Francia → "Francia (FR)"
+REGOLE PER LE MAIUSCOLE (IMPORTANTISSIMO):
+- Il NOME del cliente deve essere in MAIUSCOLO iniziale per ogni parola (es: "Mario Rossi", "Giovanni Bianchi")
+- La CITTA deve essere in MAIUSCOLO iniziale (es: "Roma", "Milano", "Torino")
+- La PROVINCIA deve essere in MAIUSCOLE (es: "RM", "MI", "TO")
+- L'INDIRIZZO deve avere la Via/Piazza in MAIUSCOLO iniziale (es: "Via Garibaldi", "Piazza Duomo", "Corso Italia")
+- Il numero civico rimane come è (es: "15", "15/A", "15B")
+- Il PAESE deve essere in MAIUSCOLO iniziale (es: "Italia", "Svizzera", "Francia")
+
+Esempi corretti:
+- Nome: "Mario Rossi" (NON "mario rossi")
+- Città: "Roma" (NON "roma" o "ROMA")
+- Provincia: "RM" (NON "rm" o "Roma")
+- Indirizzo: "Via Garibaldi 15" (NON "via garibaldi 15" o "VIA GARIBALDI 15")
+- Paese: "Italia" (NON "italia" o "ITALIA")
 
 Rispondi SOLO in JSON valido con questa struttura:
 {
-  "customer_name": "nome completo o null",
+  "customer_name": "nome completo con MAIUSCOLE iniziali o null",
   "customer_phone": "numero con prefisso internazionale o null",
   "customer_email": "email o null",
-  "customer_address": "indirizzo completo (via, numero civico) o null",
-  "customer_city": "città o null",
+  "customer_address": "indirizzo completo con MAIUSCOLE iniziali o null",
+  "customer_city": "città con MAIUSCOLA iniziale o null",
   "customer_zip": "CAP o codice postale o null",
-  "customer_province": "sigla provincia (2 lettere) o null",
-  "country": "paese nel formato 'Nome (XX)' - es: Italia (IT), Svizzera (CH), Stati Uniti (US) - o null",
+  "customer_province": "sigla provincia in MAIUSCOLE (2 lettere) o null",
+  "country": "paese rilevato con MAIUSCOLA iniziale o null",
   "product_model": "tipo di staffa rilevato: 'Staffa MV Agusta CARBONIO' o 'Staffa MV Agusta ALLUMINIO' o null",
   "quantity": numero o null,
   "price_total": numero o null,
   "source": "fonte rilevata: 'facebook', 'subito', 'whatsapp', 'direct' o null",
-  "sale_date": "data nel formato YYYY-MM-DD o null",
-  "tracking_code": "codice tracking o null",
-  "is_urgent": true/false,
   "notes": "note aggiuntive rilevanti o null",
   "confidence": "high/medium/low"
 }
@@ -586,21 +490,6 @@ ${text}
     if (!parsedData.source || parsedData.source === 'null') {
       parsedData.source = source;
     }
-
-    // Post-processing: verifica is_urgent
-    if (parsedData.is_urgent === undefined || parsedData.is_urgent === null) {
-      parsedData.is_urgent = false;
-    }
-
-    // Post-processing: verifica tracking_code
-    if (!parsedData.tracking_code || parsedData.tracking_code === 'null') {
-      parsedData.tracking_code = null;
-    }
-
-    // Post-processing: verifica sale_date
-    if (!parsedData.sale_date || parsedData.sale_date === 'null') {
-      parsedData.sale_date = null;
-    }
     
     // Normalizza la provincia (solo sigla)
     if (parsedData.customer_province && parsedData.customer_province.length > 2) {
@@ -616,39 +505,25 @@ ${text}
     return parsedData;
 
   } catch (err) {
-    console.error('Gemini AI Error (usato fallback locale):', err.message);
+    console.error('Gemini AI Error:', err.message);
     
     // Fallback: restituisci i dati rilevati localmente
     const staffaInfo = detectStaffaType(text);
     const country = detectCountry(null, null, null, text);
-    const qty = detectQuantity(text);
-    const price = detectPrice(text);
-    const src = detectSource(text);
-    
-    // Estrai anche nome e indirizzo con regex semplici
-    const nameMatch = text.match(/(?:nome|name)[\s:]*([A-Z][a-z]+\s[A-Z][a-z]+)/i);
-    const addressMatch = text.match(/(?:via|corso|piazza|viale|lungomare|strada)[\s.]*([^.\n,]+)/i);
-    const cityMatch = text.match(/(?:città|city|comune)[\s:]*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)/i);
-    const zipMatch = text.match(/\b(\d{5})\b/);
-    const phoneMatch = text.match(/(\+?\d[\d\s]{8,14}\d)/);
-    const emailMatch = text.match(/([\w.-]+@[\w.-]+\.\w+)/);
     
     return {
-      customer_name: nameMatch ? nameMatch[1].trim() : null,
-      customer_phone: phoneMatch ? phoneMatch[1].trim() : null,
-      customer_email: emailMatch ? emailMatch[1].trim() : null,
-      customer_address: addressMatch ? addressMatch[0].trim() : null,
-      customer_city: cityMatch ? cityMatch[1].trim() : null,
-      customer_zip: zipMatch ? zipMatch[1] : null,
+      customer_name: null,
+      customer_phone: null,
+      customer_email: null,
+      customer_address: null,
+      customer_city: null,
+      customer_zip: null,
       customer_province: null,
       country: country,
       product_model: staffaInfo ? staffaInfo.model : null,
-      quantity: qty,
-      price_total: price,
-      source: src,
-      sale_date: null,
-      tracking_code: null,
-      is_urgent: text.toLowerCase().includes('urgente') || text.toLowerCase().includes('subito'),
+      quantity: detectQuantity(text),
+      price_total: detectPrice(text),
+      source: detectSource(text),
       notes: null,
       confidence: 'low'
     };

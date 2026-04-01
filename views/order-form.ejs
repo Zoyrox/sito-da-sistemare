@@ -16,8 +16,8 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <div class="logo-icon" style="background: transparent; box-shadow: none;">
+            <img src="/img/logo.png" alt="MotoStaffa Logo" style="width: 100%; height: 100%; object-fit: contain;">
           </div>
           <div class="logo-text">
             <h1>MotoStaffa</h1>
@@ -37,20 +37,15 @@
         </a>
         <a href="/search" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          Ricerca Avanzata
+          Ricerca
         </a>
         <a href="/labels/queue" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-          Coda Etichette
+          Etichette
         </a>
         <a href="/stats" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
           Statistiche
-        </a>
-        <div class="sidebar-divider"></div>
-        <a href="/api/export" class="nav-item" download>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Esporta Dati
         </a>
       </nav>
 
@@ -180,49 +175,36 @@
             </div>
           </div>
 
-          <!-- Subito.it Options - sempre visibile per tutte le fonti -->
-          <div class="form-section" id="subitoSection">
+          <!-- Subito.it Pickup Option -->
+          <div class="form-section" id="subitoSection" style="display: <%= order?.source === 'subito' || !order ? 'block' : 'none' %>;">
             <h3 class="form-section-title">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
-              Opzioni Gestione Ordine
+              Opzioni Subito.it
             </h3>
-            
-            <!-- Opzione ritiro in sede -->
             <div class="form-check" style="margin-bottom: 16px;">
               <input type="checkbox" name="is_subito_pickup" id="isSubitoPickup" class="form-check-input" value="true" <%= order?.is_subito_pickup ? 'checked' : '' %> onchange="toggleSubitoPickup()">
               <label for="isSubitoPickup" class="form-check-label">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; color: var(--primary);"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <strong>Ritiro in sede</strong> - Il cliente ritira personalmente (nessuna spedizione)
+                Ritiro in sede (senza spedizione)
               </label>
             </div>
-            
-            <!-- Opzioni indirizzo parziale - visibile solo quando NON è ritiro in sede -->
             <div id="subitoAddressOptions" style="display: <%= order?.is_subito_pickup ? 'none' : 'block' %>; margin-top: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 12px;">
-              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 9h.01"/><path d="M11 12h1v4h1"/><circle cx="12" cy="12" r="10"/></svg>
-                Seleziona quali dati dell'indirizzo hai disponibili. I campi deselezionati saranno nascosti e non obbligatori.
-              </p>
-              <div class="form-row" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <div class="form-check">
-                  <input type="checkbox" id="includeAddress" class="form-check-input" <%= !order || order?.customer_address ? 'checked' : '' %> onchange="toggleAddressField('customer_address')">
-                  <label for="includeAddress" class="form-check-label">Via/Indirizzo</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="includeCap" class="form-check-input" <%= !order || order?.customer_zip ? 'checked' : '' %> onchange="toggleAddressField('customer_zip')">
-                  <label for="includeCap" class="form-check-label">CAP</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="includeCity" class="form-check-input" <%= !order || order?.customer_city ? 'checked' : '' %> onchange="toggleAddressField('customer_city')">
-                  <label for="includeCity" class="form-check-label">Città</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="includeProvince" class="form-check-input" <%= !order || order?.customer_province ? 'checked' : '' %> onchange="toggleAddressField('customer_province')">
-                  <label for="includeProvince" class="form-check-label">Provincia</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="includeCountry" class="form-check-input" checked onchange="toggleAddressField('customer_country')">
-                  <label for="includeCountry" class="form-check-label">Paese</label>
-                </div>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Seleziona quali dati dell'indirizzo inserire (lascia vuoti quelli che non hai):</p>
+              <div class="form-check" style="margin-bottom: 8px;">
+                <input type="checkbox" id="includeAddress" class="form-check-input" checked onchange="toggleAddressField('customer_address')">
+                <label for="includeAddress" class="form-check-label">Via/Indirizzo</label>
+              </div>
+              <div class="form-check" style="margin-bottom: 8px;">
+                <input type="checkbox" id="includeCap" class="form-check-input" checked onchange="toggleAddressField('customer_zip')">
+                <label for="includeCap" class="form-check-label">CAP</label>
+              </div>
+              <div class="form-check" style="margin-bottom: 8px;">
+                <input type="checkbox" id="includeCity" class="form-check-input" checked onchange="toggleAddressField('customer_city')">
+                <label for="includeCity" class="form-check-label">Città</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="includeProvince" class="form-check-input" checked onchange="toggleAddressField('customer_province')">
+                <label for="includeProvince" class="form-check-label">Provincia</label>
               </div>
             </div>
           </div>
@@ -260,8 +242,20 @@
             </div>
             <div class="form-group">
               <label class="form-label">Paese</label>
-              <input type="text" name="customer_country" id="customer_country" class="form-input" value="<%= order?.customer_country || 'Italia (IT)' %>" placeholder="Es: Italia (IT), Stati Uniti (US)">
-              <small style="color: var(--text-muted); font-size: 12px;">Formato: Nome Paese (XX) - L'AI lo rileva automaticamente</small>
+              <select name="customer_country" id="customer_country" class="form-select">
+                <option value="Italia" <%= !order?.customer_country || order?.customer_country === 'Italia' ? 'selected' : '' %>>Italia</option>
+                <option value="Svizzera" <%= order?.customer_country === 'Svizzera' ? 'selected' : '' %>>Svizzera</option>
+                <option value="San Marino" <%= order?.customer_country === 'San Marino' ? 'selected' : '' %>>San Marino</option>
+                <option value="Città del Vaticano" <%= order?.customer_country === 'Città del Vaticano' ? 'selected' : '' %>>Città del Vaticano</option>
+                <option value="Francia" <%= order?.customer_country === 'Francia' ? 'selected' : '' %>>Francia</option>
+                <option value="Germania" <%= order?.customer_country === 'Germania' ? 'selected' : '' %>>Germania</option>
+                <option value="Austria" <%= order?.customer_country === 'Austria' ? 'selected' : '' %>>Austria</option>
+                <option value="Spagna" <%= order?.customer_country === 'Spagna' ? 'selected' : '' %>>Spagna</option>
+                <option value="Regno Unito" <%= order?.customer_country === 'Regno Unito' ? 'selected' : '' %>>Regno Unito</option>
+                <option value="Paesi Bassi" <%= order?.customer_country === 'Paesi Bassi' ? 'selected' : '' %>>Paesi Bassi</option>
+                <option value="Belgio" <%= order?.customer_country === 'Belgio' ? 'selected' : '' %>>Belgio</option>
+                <option value="Altro" <%= order?.customer_country && !['Italia', 'Svizzera', 'San Marino', 'Città del Vaticano', 'Francia', 'Germania', 'Austria', 'Spagna', 'Regno Unito', 'Paesi Bassi', 'Belgio'].includes(order?.customer_country) ? 'selected' : '' %>>Altro (specificare nelle note)</option>
+              </select>
             </div>
           </div>
 
@@ -317,7 +311,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Fonte</label>
-                <select name="source" class="form-select" id="sourceSelect">
+                <select name="source" class="form-select" id="sourceSelect" onchange="toggleSubitoSection()">
                   <option value="facebook" <%= order?.source === 'facebook' ? 'selected' : '' %>>Facebook</option>
                   <option value="subito" <%= order?.source === 'subito' ? 'selected' : '' %>>Subito.it</option>
                   <option value="whatsapp" <%= order?.source === 'whatsapp' ? 'selected' : '' %>>WhatsApp</option>
@@ -405,6 +399,19 @@
       }
     });
 
+    // Toggle Subito Section based on source
+    function toggleSubitoSection() {
+      const source = document.getElementById('sourceSelect').value;
+      const subitoSection = document.getElementById('subitoSection');
+      if (source === 'subito') {
+        subitoSection.style.display = 'block';
+      } else {
+        subitoSection.style.display = 'none';
+        document.getElementById('isSubitoPickup').checked = false;
+        toggleSubitoPickup();
+      }
+    }
+
     // Toggle Subito Pickup - hide/show address fields
     function toggleSubitoPickup() {
       const isPickup = document.getElementById('isSubitoPickup').checked;
@@ -412,71 +419,52 @@
       const addressOptions = document.getElementById('subitoAddressOptions');
       
       if (isPickup) {
-        // Ritiro in sede: nascondi tutta la sezione indirizzo
         addressSection.style.display = 'none';
         addressOptions.style.display = 'none';
-        // Rimuovi required da tutti i campi indirizzo
+        // Clear required attributes
         document.getElementById('customer_address').required = false;
         document.getElementById('customer_zip').required = false;
         document.getElementById('customer_city').required = false;
-        document.getElementById('customer_province').required = false;
       } else {
-        // Spedizione normale: mostra sezione indirizzo e opzioni
         addressSection.style.display = 'block';
         addressOptions.style.display = 'block';
-        // Aggiorna i campi in base alle checkbox selezionate
         updateAddressRequirements();
       }
     }
 
     // Toggle individual address fields
     function toggleAddressField(fieldName) {
-      const fieldMap = {
-        'customer_address': 'includeAddress',
-        'customer_zip': 'includeCap',
-        'customer_city': 'includeCity',
-        'customer_province': 'includeProvince',
-        'customer_country': 'includeCountry'
-      };
-      
-      const checkboxId = fieldMap[fieldName];
-      const checkbox = document.getElementById(checkboxId);
+      const checkbox = document.getElementById('include' + fieldName.split('_')[1].charAt(0).toUpperCase() + fieldName.split('_')[1].slice(1));
       const field = document.getElementById(fieldName);
-      const requiredSpan = document.getElementById(fieldName.replace('customer_', '') + 'Required');
+      const requiredSpan = document.getElementById(fieldName.split('_')[1] + 'Required');
       
       if (checkbox && checkbox.checked) {
-        // Mostra il campo
-        field.closest('.form-group, .form-row > div').style.display = 'block';
-        field.disabled = false;
+        field.parentElement.style.display = 'block';
         if (requiredSpan) requiredSpan.style.display = 'inline';
-        // Rendi obbligatorio solo se è un campo essenziale
-        if (fieldName === 'customer_address' || fieldName === 'customer_city') {
-          field.required = true;
-        }
       } else {
-        // Nascondi il campo
-        field.closest('.form-group, .form-row > div').style.display = 'none';
-        field.disabled = true;
-        field.required = false;
+        field.parentElement.style.display = 'none';
+        field.value = '';
         if (requiredSpan) requiredSpan.style.display = 'none';
-        // Non svuotare il valore, potrebbe essere utile mantenerlo
       }
     }
 
     // Update address field requirements based on checkboxes
     function updateAddressRequirements() {
-      const fields = ['customer_address', 'customer_zip', 'customer_city', 'customer_province'];
+      const fields = ['customer_address', 'customer_zip', 'customer_city'];
       fields.forEach(field => {
-        toggleAddressField(field);
+        const checkboxId = 'include' + field.split('_')[1].charAt(0).toUpperCase() + field.split('_')[1].slice(1);
+        const checkbox = document.getElementById(checkboxId);
+        const input = document.getElementById(field);
+        if (checkbox && input) {
+          input.required = checkbox.checked;
+        }
       });
     }
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      // Inizializza lo stato dei campi indirizzo
+      toggleSubitoSection();
       toggleSubitoPickup();
-      // Applica lo stato delle checkbox ai campi
-      updateAddressRequirements();
     });
 
     // Smart Paste Parser con AI avanzata
@@ -500,13 +488,7 @@
         const data = await res.json();
 
         if (data.error) {
-          showToast('Errore: ' + data.error, 'error');
-          return;
-        }
-        
-        // Se non ci sono dati validi, mostra avviso
-        if (!data.customer_name && !data.customer_address && !data.product_model) {
-          showToast('Nessun dato rilevato. Prova a incollare più informazioni.', 'warning');
+          showToast('Errore analisi AI', 'error');
           return;
         }
 
@@ -520,54 +502,22 @@
         if (data.customer_province) document.getElementById('customer_province').value = data.customer_province;
         if (data.country) document.getElementById('customer_country').value = data.country;
         
-        // Compila il prodotto se rilevato - matching flessibile
+        // Compila il prodotto se rilevato
         if (data.product_model) {
           const productSelect = document.getElementById('productSelect');
           const customInput = document.getElementById('customProduct');
           let found = false;
           
-          // Normalizza il modello rilevato dall'AI
-          const aiModel = data.product_model.toLowerCase().trim();
-          
-          // Cerca corrispondenza esatta prima
           for (let i = 0; i < productSelect.options.length; i++) {
-            const optionValue = productSelect.options[i].value.toLowerCase();
-            const optionText = productSelect.options[i].text.toLowerCase();
-            
-            // Match esatto
             if (productSelect.options[i].value === data.product_model) {
               productSelect.selectedIndex = i;
               found = true;
               customInput.style.display = 'none';
+              // Imposta il prezzo
               if (productSelect.options[i].dataset.price) {
                 document.getElementById('priceInput').value = productSelect.options[i].dataset.price;
               }
               break;
-            }
-          }
-          
-          // Se non trovato, cerca match parziale
-          if (!found) {
-            for (let i = 0; i < productSelect.options.length; i++) {
-              const optionValue = productSelect.options[i].value.toLowerCase();
-              const optionText = productSelect.options[i].text.toLowerCase();
-              
-              // Controlla se contiene "carbonio" o "alluminio"
-              const isCarbonio = aiModel.includes('carbonio') || aiModel.includes('carbon');
-              const isAlluminio = aiModel.includes('alluminio') || aiModel.includes('aluminium') || aiModel.includes('aluminum');
-              
-              const optionIsCarbonio = optionValue.includes('carbonio') || optionText.includes('carbonio');
-              const optionIsAlluminio = optionValue.includes('alluminio') || optionText.includes('alluminio');
-              
-              if ((isCarbonio && optionIsCarbonio) || (isAlluminio && optionIsAlluminio)) {
-                productSelect.selectedIndex = i;
-                found = true;
-                customInput.style.display = 'none';
-                if (productSelect.options[i].dataset.price) {
-                  document.getElementById('priceInput').value = productSelect.options[i].dataset.price;
-                }
-                break;
-              }
             }
           }
           
@@ -599,42 +549,9 @@
           document.querySelector('textarea[name="notes"]').value = data.notes;
         }
 
-        // Compila data vendita
-        if (data.sale_date) {
-          document.querySelector('input[name="sale_date"]').value = data.sale_date;
-        }
-
-        // Compila tracking code
-        if (data.tracking_code) {
-          document.querySelector('input[name="tracking_code"]').value = data.tracking_code;
-        }
-
-        // Compila urgente
-        if (data.is_urgent) {
-          document.getElementById('isUrgent').checked = true;
-        }
-
         // Se c'è il CAP italiano, cerca comunque il comune (fallback)
         if (data.customer_zip && (data.country === 'Italia' || !data.country)) {
           lookupComune();
-        }
-        
-        // Aggiorna lo stato dei campi indirizzo in base ai dati ricevuti
-        if (!data.customer_address) {
-          document.getElementById('includeAddress').checked = false;
-          toggleAddressField('customer_address');
-        }
-        if (!data.customer_zip) {
-          document.getElementById('includeCap').checked = false;
-          toggleAddressField('customer_zip');
-        }
-        if (!data.customer_city) {
-          document.getElementById('includeCity').checked = false;
-          toggleAddressField('customer_city');
-        }
-        if (!data.customer_province) {
-          document.getElementById('includeProvince').checked = false;
-          toggleAddressField('customer_province');
         }
 
         const msg = data.confidence === 'high' 
@@ -672,23 +589,12 @@
 
     // Verifica indirizzo con Google Maps
     async function verifyAddress() {
-      // Raccogli TUTTI i campi dell'indirizzo
       const address = document.getElementById('customer_address').value.trim();
       const city = document.getElementById('customer_city').value.trim();
       const zip = document.getElementById('customer_zip').value.trim();
-      const province = document.getElementById('customer_province').value.trim();
-      const country = document.getElementById('customer_country').value;
       
-      // Costruisci l'indirizzo completo per la ricerca
-      let fullAddress = '';
-      if (address) fullAddress += address;
-      if (city) fullAddress += (fullAddress ? ', ' : '') + city;
-      if (zip) fullAddress += (fullAddress ? ' ' : '') + zip;
-      if (province) fullAddress += (fullAddress ? ' ' : '') + `(${province})`;
-      if (country) fullAddress += (fullAddress ? ', ' : '') + country;
-      
-      if (!fullAddress) {
-        showToast('Inserisci almeno un campo indirizzo', 'error');
+      if (!address && !city) {
+        showToast('Inserisci almeno indirizzo o città', 'error');
         return;
       }
       
@@ -698,7 +604,7 @@
       btn.disabled = true;
       
       try {
-        const res = await fetch(`/api/geocode?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}&zip=${encodeURIComponent(zip)}&province=${encodeURIComponent(province)}&country=${encodeURIComponent(country)}`);
+        const res = await fetch(`/api/geocode?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}&zip=${encodeURIComponent(zip)}`);
         const data = await res.json();
         
         const resultDiv = document.getElementById('geocodeResult');
@@ -719,9 +625,14 @@
             document.getElementById('customer_province').value = data.result.administrative_area_level_2;
           }
           if (data.result.country) {
-            // Cerca il codice ISO del paese
-            const countryCode = getCountryCode(data.result.country);
-            document.getElementById('customer_country').value = `${data.result.country} (${countryCode})`;
+            const countrySelect = document.getElementById('customer_country');
+            // Cerca il paese nelle opzioni
+            for (let i = 0; i < countrySelect.options.length; i++) {
+              if (countrySelect.options[i].text.toLowerCase() === data.result.country.toLowerCase()) {
+                countrySelect.selectedIndex = i;
+                break;
+              }
+            }
           }
           
           resultDiv.textContent = `✓ Indirizzo verificato: ${data.result.formatted_address}`;
@@ -740,43 +651,6 @@
         btn.innerHTML = originalHTML;
         btn.disabled = false;
       }
-    }
-    
-    // Helper per ottenere il codice paese
-    function getCountryCode(countryName) {
-      const countryMap = {
-        'Italia': 'IT', 'Italy': 'IT',
-        'Svizzera': 'CH', 'Switzerland': 'CH', 'Schweiz': 'CH',
-        'San Marino': 'SM',
-        'Città del Vaticano': 'VA', 'Vatican City': 'VA',
-        'Francia': 'FR', 'France': 'FR',
-        'Germania': 'DE', 'Germany': 'DE', 'Deutschland': 'DE',
-        'Austria': 'AT', 'Österreich': 'AT',
-        'Spagna': 'ES', 'Spain': 'ES', 'España': 'ES',
-        'Regno Unito': 'GB', 'United Kingdom': 'GB', 'UK': 'GB',
-        'Belgio': 'BE', 'Belgium': 'BE', 'Belgique': 'BE',
-        'Paesi Bassi': 'NL', 'Netherlands': 'NL', 'Nederland': 'NL',
-        'Lussemburgo': 'LU', 'Luxembourg': 'LU',
-        'Portogallo': 'PT', 'Portugal': 'PT',
-        'Polonia': 'PL', 'Poland': 'PL', 'Polska': 'PL',
-        'Romania': 'RO', 'Romania': 'RO', 'România': 'RO',
-        'Bulgaria': 'BG', 'България': 'BG',
-        'Grecia': 'GR', 'Greece': 'GR', 'Ελλάδα': 'GR',
-        'Ungheria': 'HU', 'Hungary': 'HU', 'Magyarország': 'HU',
-        'Repubblica Ceca': 'CZ', 'Czech Republic': 'CZ', 'Česká republika': 'CZ',
-        'Slovacchia': 'SK', 'Slovakia': 'SK', 'Slovensko': 'SK',
-        'Danimarca': 'DK', 'Denmark': 'DK', 'Danmark': 'DK',
-        'Svezia': 'SE', 'Sweden': 'SE', 'Sverige': 'SE',
-        'Norvegia': 'NO', 'Norway': 'NO', 'Norge': 'NO',
-        'Finlandia': 'FI', 'Finland': 'FI', 'Suomi': 'FI',
-        'Irlanda': 'IE', 'Ireland': 'IE', 'Éire': 'IE',
-        'Stati Uniti': 'US', 'United States': 'US', 'USA': 'US',
-        'Canada': 'CA',
-        'Australia': 'AU',
-        'Russia': 'RU', 'Россия': 'RU',
-        'Ucraina': 'UA', 'Ukraine': 'UA', 'Україна': 'UA'
-      };
-      return countryMap[countryName] || 'XX';
     }
 
     <% if (mode === 'edit') { %>
